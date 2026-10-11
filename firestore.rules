@@ -1,0 +1,167 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    /* ------------------------------ helpers ------------------------------ */
+    function signedIn() { return request.auth != null; }
+    function isOwner(userId) { return signedIn() && request.auth.uid == userId; }
+    function projectOwner(projectId) {
+      return signedIn() &&
+        get(/databases/$(database)/documents/projects/$(projectId)).data.ownerUserId == request.auth.uid;
+    }
+
+    /* ------------------- validation (the "DDL" constraints) ------------------- */
+    function validUser(d) {
+      return d.keys().hasAll(['fullName', 'email', 'userRole'])
+        && d.fullName is string && d.fullName.size() > 0 && d.fullName.size() <= 100
+        && d.userRole in ['Student', 'Owner', 'Both']
+        && (('profile' in d && d.profile is map
+          && d.profile.department is string && d.profile.department.size() <= 80
+          && d.profile.yearOfStudy is int && d.profile.yearOfStudy >= 1 && d.profile.yearOfStudy <= 5
+          && d.profile.experienceLevel in ['Beginner', 'Intermediate', 'Advanced']
+          && (!('bio' in d.profile) || d.profile.bio is string))
+        || (d.get('isDemo', false) == true
+          && d.department is string
+          && d.yearOfStudy is int
+          && d.experienceLevel is string));
+    }
+
+    // NOT NULL + CHECK (1-5) + foreign key to skills/{skillId}
+    function validStudentSkill(d, skillId) {
+      return d.keys().hasAll(['skillId', 'skillName', 'proficiencyLevel', 'yearsOfExperience'])
+        && d.skillId == skillId
+        && exists(/databases/$(database)/documents/skills/$(skillId))
+        && d.proficiencyLevel is int && d.proficiencyLevel >= 1 && d.proficiencyLevel <= 5
+        && d.yearsOfExperience is number && d.yearsOfExperience >= 0;
+    }
+
+    function validPreferredRole(d, roleId) {
+      return d.keys().hasAll(['roleId', 'roleName', 'preferenceRank'])
+        && d.roleId == roleId
+        && exists(/databases/$(database)/documents/roles/$(roleId))
+        && d.preferenceRank is int && d.preferenceRank >= 1 && d.preferenceRank <= 8;
+    }
+
+    function validSlot(d) {
+      return d.keys().hasAll(['dayOfWeek', 'startTime', 'endTime'])
+        && d.dayOfWeek in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+        && d.startTime is string && d.startTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && d.endTime is string && d.endTime.matches('^([01][0-9]|2[0-3]):[0-5][0-9]$')
+        && d.endTime > d.startTime;
+    }
+
+    function validProject(d) {
+      return d.keys().hasAll(['title', 'description', 'domainArea', 'teamSizeRequired', 'status', 'deadline',
+                              'requiredSkills', 'requiredRoles', 'requiredSkillIds', 'requiredRoleIds'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 120
+        && d.description is string && d.description.size() > 0
+        && d.domainArea is string && d.domainArea.size() > 0 && d.domainArea.size() <= 60
+        && d.teamSizeRequired is int && d.teamSizeRequired > 0 && d.teamSizeRequired <= 20
+        && d.status in ['Open', 'InProgress', 'Closed']
+        && d.deadline is timestamp
+        && d.requiredSkills is list && d.requiredSkills.size() > 0
+        && d.requiredRoles is list && d.requiredRoles.size() > 0
+        && d.requiredSkillIds is list && d.requiredRoleIds is list;
+    }
+
+    /* ------------------------------ master data ------------------------------ */
+    match /roles/{roleId}   { 
+      allow read: if signedIn(); 
+      allow create: if signedIn() && request.resource.data.keys().hasAll(['roleName']) 
+        && request.resource.data.roleName is string && request.resource.data.roleName.size() > 0;
+      allow update, delete: if false; 
+    }
+    match /skills/{skillId} { 
+      allow read: if signedIn(); 
+      allow create: if signedIn() && request.resource.data.keys().hasAll(['skillName', 'skillCategory']) 
+        && request.resource.data.skillName is string && request.resource.data.skillName.size() > 0
+        && request.resource.data.skillCategory is string;
+      allow update, delete: if false; 
+    }
+
+    /* ---------------------------------- users --------------------------------- */
+    match /users/{userId} {
+      allow read: if signedIn();
+      allow create: if (isOwner(userId) && validUser(request.resource.data)
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.createdAt == request.time)
+        || (signedIn() && request.resource.data.get('isDemo', false) == true
+        && request.resource.data.createdAt == request.time);
+      allow update: if isOwner(userId) && validUser(request.resource.data)
+        && request.resource.data.email == resource.data.email
+        && request.resource.data.createdAt == resource.data.createdAt;
+      allow delete: if resource.data.get('isDemo', false) == true && signedIn();
+
+      match /skills/{skillId} {
+        allow read: if signedIn();
+        allow create, update: if (isOwner(userId) && validStudentSkill(request.resource.data, skillId))
+          || (signedIn() && exists(/databases/$(database)/documents/users/$(userId)) 
+          && get(/databases/$(database)/documents/users/$(userId)).data.get('isDemo', false) == true);
+        allow delete: if isOwner(userId) 
+          || (signedIn() && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.get('isDemo', false) == true);
+      }
+      match /preferredRoles/{roleId} {
+        allow read: if signedIn();
+        allow create, update: if (isOwner(userId) && validPreferredRole(request.resource.data, roleId))
+          || (signedIn() && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.get('isDemo', false) == true);
+        allow delete: if isOwner(userId)
+          || (signedIn() && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.get('isDemo', false) == true);
+      }
+      match /availability/{slotId} {
+        allow read: if signedIn();
+        allow create, update: if (isOwner(userId) && validSlot(request.resource.data))
+          || (signedIn() && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.get('isDemo', false) == true);
+        allow delete: if isOwner(userId)
+          || (signedIn() && exists(/databases/$(database)/documents/users/$(userId))
+          && get(/databases/$(database)/documents/users/$(userId)).data.get('isDemo', false) == true);
+      }
+      match /notifications/{notificationId} {
+        allow read: if isOwner(userId);
+        allow update: if isOwner(userId) && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow create, delete: if false;   // written by Cloud Functions only
+      }
+    }
+
+    /* --------------------------------- projects -------------------------------- */
+    match /projects/{projectId} {
+      allow read: if signedIn();
+      allow create: if signedIn() && validProject(request.resource.data)
+        && request.resource.data.ownerUserId == request.auth.uid
+        && request.resource.data.status == 'Open'
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn() && resource.data.ownerUserId == request.auth.uid
+        && validProject(request.resource.data)
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['team', 'ownerUserId', 'createdAt']);
+      allow delete: if false;            // close a project instead of deleting it
+
+      // Created only through the applyToProject callable; the applicant may withdraw while Pending.
+      match /applications/{applicationId} {
+        allow read: if signedIn() && (applicationId == request.auth.uid || projectOwner(projectId));
+        allow create, update: if false;
+        allow delete: if signedIn() && resource.data.profileId == request.auth.uid && resource.data.status == 'Pending';
+      }
+
+      // Everything below is derived data written by Cloud Functions (Admin SDK bypasses rules).
+      match /teamMembers/{profileId}     { allow read: if signedIn(); allow write: if false; }
+      match /team/{docId}                { allow read: if signedIn(); allow write: if false; }
+      match /tbiHistory/{historyId}      { allow read: if signedIn(); allow write: if false; }
+      match /recommendations/{profileId} { allow read: if projectOwner(projectId); allow write: if false; }
+    }
+
+    /* --------------------- collection-group queries (dashboard) --------------------- */
+    match /{path=**}/applications/{applicationId} {
+      allow read: if signedIn() && resource.data.profileId == request.auth.uid;
+    }
+    match /{path=**}/teamMembers/{memberId} {
+      allow read: if signedIn();
+    }
+
+    /* -------------------------------- analytics -------------------------------- */
+    match /analytics/{docId} { allow read: if signedIn(); allow write: if false; }
+  }
+}

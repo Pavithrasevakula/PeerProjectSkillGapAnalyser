@@ -1,0 +1,56 @@
+{
+  "random": {
+    "coverage": {
+      "mean": 48.538,
+      "sd": 20.916
+    },
+    "residualGap": {
+      "mean": 8.959,
+      "sd": 3.795
+    },
+    "uncoveredMustHave": {
+      "mean": 2.551,
+      "sd": 1.161
+    },
+    "tbi": {
+      "mean": 56.894,
+      "sd": 9.663
+    }
+  },
+  "keyword": {
+    "coverage": {
+      "mean": 77.413,
+      "sd": 14.328
+    },
+    "residualGap": {
+      "mean": 4.119,
+      "sd": 2.612
+    },
+    "uncoveredMustHave": {
+      "mean": 1.534,
+      "sd": 1.056
+    },
+    "tbi": {
+      "mean": 68.711,
+      "sd": 7.653
+    }
+  },
+  "complementarity": {
+    "coverage": {
+      "mean": 88.227,
+      "sd": 11.95
+    },
+    "residualGap": {
+      "mean": 2.344,
+      "sd": 2.379
+    },
+    "uncoveredMustHave": {
+      "mean": 0.973,
+      "sd": 0.952
+    },
+    "tbi": {
+      "mean": 75.178,
+      "sd": 5.537
+    }
+  }
+}

@@ -1,0 +1,11 @@
+"use strict";
+const admin = require("firebase-admin");
+
+if (!admin.apps.length) admin.initializeApp();
+
+module.exports = {
+  admin,
+  db: admin.firestore(),
+  FieldValue: admin.firestore.FieldValue,
+  Timestamp: admin.firestore.Timestamp,
+};
