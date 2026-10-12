@@ -1,0 +1,53 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+frontend/dist/
+frontend/build/
+functions/lib/
+
+# Environment variables (SENSITIVE - Never commit!)
+.env
+*.env
+frontend/.env
+frontend/.env.local
+functions/.env
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Firebase
+.firebase/
+.firebaserc.local
+
+# Firebase Admin SDK private key (CRITICAL - Never commit!)
+service-account-key.json
+**/service-account-key.json
+functions/service-account-key.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# OS
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+~$*.docx
+~$*.xlsx
+
+# Personal notes (optional - uncomment if needed)
+# NOTES.md
+# TODO.md
