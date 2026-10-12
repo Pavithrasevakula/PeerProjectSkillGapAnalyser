@@ -10,6 +10,7 @@ import Projects from "./pages/Projects.jsx";
 import NewProject from "./pages/NewProject.jsx";
 import ProjectDetail from "./pages/ProjectDetail.jsx";
 import Dashboard from "./pages/Dashboard.jsx";
+import DiagnosticDebug from "./pages/DiagnosticDebug.jsx";
 
 function Protected({ children }) {
   const { user, account, loading } = useAuth();
@@ -137,6 +138,7 @@ export default function App() {
           <Route path="/projects/:id" element={<Protected><ProjectDetail /></Protected>} />
           <Route path="/projects/:id/edit" element={<Protected><NewProject /></Protected>} />
           <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
+          <Route path="/debug" element={<Protected><DiagnosticDebug /></Protected>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

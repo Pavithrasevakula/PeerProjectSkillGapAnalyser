@@ -89,6 +89,30 @@ const DOMAINS = [
   "AI Tools", "Developer Tools", "Analytics", "Marketing Tech", "HR Tech",
   "Legal Tech", "Real Estate Tech", "Travel Tech", "Food Tech",
 ];
+
+// Indian names for realistic dataset
+const INDIAN_FIRST_NAMES = [
+  'Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Arnav', 'Ayaan', 'Krishna', 'Ishaan',
+  'Shaurya', 'Atharv', 'Advik', 'Pranav', 'Reyansh', 'Aarush', 'Kabir', 'Shivansh', 'Ritvik', 'Kian',
+  'Dhruv', 'Rohan', 'Laksh', 'Aayansh', 'Veer', 'Rudra', 'Darsh', 'Mihir', 'Advait', 'Kiaan',
+  'Aaradhya', 'Saanvi', 'Ananya', 'Diya', 'Aadhya', 'Kiara', 'Kavya', 'Avni', 'Sara', 'Pari',
+  'Navya', 'Angel', 'Prisha', 'Myra', 'Anika', 'Riya', 'Shanaya', 'Anvi', 'Siya', 'Ira',
+  'Mira', 'Ishika', 'Tara', 'Aditi', 'Sia', 'Priyanka', 'Nisha', 'Sneha', 'Pooja', 'Divya',
+  'Rahul', 'Amit', 'Raj', 'Kunal', 'Nikhil', 'Varun', 'Karan', 'Siddharth', 'Manish', 'Abhishek',
+  'Priya', 'Anjali', 'Neha', 'Swati', 'Megha', 'Shreya', 'Kavita', 'Ritu', 'Pallavi', 'Sonali',
+  'Aakarsh', 'Advay', 'Ansh', 'Ayush', 'Daksh', 'Dev', 'Harsh', 'Hriday', 'Krish', 'Naitik',
+  'Aarya', 'Ahana', 'Alisha', 'Anaya', 'Aanya', 'Bhavya', 'Devika', 'Ishita', 'Jiya', 'Khushi'
+];
+
+const INDIAN_LAST_NAMES = [
+  'Sharma', 'Verma', 'Kumar', 'Singh', 'Patel', 'Gupta', 'Reddy', 'Rao', 'Nair', 'Menon',
+  'Iyer', 'Desai', 'Mehta', 'Joshi', 'Shah', 'Agarwal', 'Khanna', 'Malhotra', 'Bhat', 'Kulkarni',
+  'Pandey', 'Mishra', 'Trivedi', 'Saxena', 'Sinha', 'Chopra', 'Kapoor', 'Sethi', 'Bhatia', 'Jain',
+  'Bansal', 'Arora', 'Tiwari', 'Das', 'Ghosh', 'Roy', 'Saha', 'Chatterjee', 'Mukherjee', 'Bose',
+  'Pillai', 'Varma', 'Naidu', 'Krishna', 'Hegde', 'Shetty', 'Powar', 'Patil', 'Jadhav', 'More',
+  'Agarwal', 'Dutta', 'Goswami', 'Thakur', 'Kaur', 'Kohli', 'Chauhan', 'Bakshi', 'Sood', 'Rathore'
+];
+
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 const START_TIMES = ["09:00", "10:00", "14:00", "16:00", "18:00", "19:00"];
 const ADJECTIVES = [
@@ -123,7 +147,7 @@ function generateDataset({ seed = 42, userCount = 120, projectCount = 35, refDat
     const [lo, hi] = LEVEL_RANGE[experienceLevel];
     return {
       uid: `u${pad(i + 1)}`,
-      fullName: faker.person.fullName(),
+      fullName: `${pick(INDIAN_FIRST_NAMES)} ${pick(INDIAN_LAST_NAMES)}`,
       email: `student${pad(i + 1)}@example.edu`,
       userRole: i < projectCount ? "Both" : "Student",
       createdAt: faker.date.past({ years: 1, refDate }),
@@ -156,11 +180,38 @@ function generateDataset({ seed = 42, userCount = 120, projectCount = 35, refDat
 
     const domainArea = pick(DOMAINS);
     const owner = owners[i % owners.length];
+    
+    // Generate domain-appropriate descriptions
+    const descriptionTemplates = {
+      "EdTech": "An innovative learning platform that enhances student engagement and provides personalized educational experiences.",
+      "HealthTech": "A comprehensive healthcare solution designed to improve patient outcomes and streamline medical workflows.",
+      "FinTech": "A cutting-edge financial technology platform offering secure transactions and smart money management tools.",
+      "E-Commerce": "A modern online marketplace with intelligent recommendations and seamless shopping experience.",
+      "Smart City": "An IoT-enabled urban management system for improving city services and quality of life.",
+      "AgriTech": "A technology-driven agricultural platform helping farmers optimize crop yields and resource management.",
+      "Social Good": "A community-focused application aimed at creating positive social impact and connecting volunteers.",
+      "Climate Tech": "An environmental monitoring and sustainability platform for tracking carbon footprint and promoting green initiatives.",
+      "Gaming": "An immersive gaming experience with multiplayer capabilities and advanced graphics rendering.",
+      "IoT": "A connected device ecosystem enabling smart automation and real-time data monitoring.",
+      "AR/VR": "An augmented and virtual reality application delivering immersive experiences and interactive content.",
+      "Blockchain": "A decentralized blockchain solution ensuring transparency, security, and trustless transactions.",
+      "AI Tools": "An artificial intelligence platform providing intelligent automation and predictive analytics.",
+      "Developer Tools": "A comprehensive development toolkit streamlining the software build and deployment process.",
+      "Analytics": "A powerful data analytics platform turning raw data into actionable business insights.",
+      "Marketing Tech": "A marketing automation solution optimizing campaigns and measuring ROI effectively.",
+      "HR Tech": "A human resources management system simplifying recruitment, onboarding, and employee engagement.",
+      "Legal Tech": "A legal technology platform automating document management and compliance tracking.",
+      "Real Estate Tech": "A property technology solution connecting buyers, sellers, and agents through digital innovation.",
+      "Travel Tech": "A travel planning and booking platform offering personalized itineraries and seamless experiences.",
+      "Food Tech": "A food delivery and restaurant management system enhancing customer experience and operational efficiency.",
+    };
+    
     return {
       id: `p${pad(i + 1)}`,
       ownerUserId: owner.uid,
+      ownerName: owner.fullName,
       title: `${pick(ADJECTIVES)} ${domainArea} ${pick(NOUNS)}`,
-      description: faker.lorem.sentences(2),
+      description: descriptionTemplates[domainArea] || "An innovative technology solution designed to solve real-world problems.",
       domainArea, teamSizeRequired, status: "Open",
       deadline: faker.date.future({ years: 0.4, refDate }),
       createdAt: faker.date.past({ years: 0.2, refDate }),

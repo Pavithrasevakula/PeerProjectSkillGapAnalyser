@@ -224,14 +224,19 @@ async function generate500Records() {
       const owner = randomElement(users);
       const projectId = db.collection('projects').doc().id;
       
-      const requiredSkills = randomElements(skills, 4, 8);
-      const requiredRoles = randomElements(roles, 2, 4).map(role => ({
-        name: role,
-        count: randomInt(1, 3),
-        filled: 0
+      const requiredSkills = randomElements(skills, 4, 8).map((skill, idx) => ({
+        skillId: `skill_${skill.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+        skillName: skill,
+        minProficiency: randomInt(2, 4),
+        priority: randomElement(['Must-have', 'Must-have', 'Nice-to-have'])
+      }));
+      const requiredRoles = randomElements(roles, 2, 4).map((role, idx) => ({
+        roleId: `role_${role.toLowerCase().replace(/[^a-z0-9]/g, '_')}`,
+        roleName: role,
+        slots: randomInt(1, 3)
       }));
       
-      const totalRequired = requiredRoles.reduce((sum, r) => sum + r.count, 0);
+      const totalRequired = requiredRoles.reduce((sum, r) => sum + r.slots, 0);
       
       const status = randomElement(['Open', 'Open', 'Open', 'In Progress', 'Completed']);
       
@@ -239,9 +244,11 @@ async function generate500Records() {
         id: projectId,
         title: `${randomElement(projectTitles)} ${i}`,
         description: randomElement(projectDescriptions),
-        domain: randomElement(domains),
+        domainArea: randomElement(domains),
         requiredSkills: requiredSkills,
         requiredRoles: requiredRoles,
+        requiredSkillIds: requiredSkills.map(s => s.skillId),
+        requiredRoleIds: requiredRoles.map(r => r.roleId),
         teamSizeRequired: totalRequired + 1, // +1 for owner
         ownerUserId: owner.uid,
         ownerName: owner.fullName,

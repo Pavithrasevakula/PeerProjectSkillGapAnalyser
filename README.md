@@ -1,6 +1,6 @@
-# 🤝 Peer Team Matcher - Intelligent Team Formation System
+# TeamSync - Intelligent Team Formation System
 
-> **Smart team building with AI-powered matching algorithms for academic projects**
+> Smart team building with AI-powered matching algorithms for collaborative projects
 
 [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
 [![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/)
@@ -10,119 +10,121 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Overview](#-overview)
-- [Features](#-features)
-- [Tech Stack](#-tech-stack)
-- [Architecture](#-architecture)
-- [Getting Started](#-getting-started)
-- [Demo Accounts](#-demo-accounts)
-- [Database Commands](#-database-commands)
-- [Project Structure](#-project-structure)
-- [Contributing](#-contributing)
-- [License](#-license)
-
----
-
-## 🎯 Overview
-
-**Peer Team Matcher** is an intelligent team formation system designed for academic environments. It uses sophisticated algorithms to match students based on complementary skills, role requirements, and availability, ensuring optimal team composition for project-based learning.
-
-### The Problem
-
-Traditional team formation methods are:
-- ⏰ Time-consuming and manual
-- 🎲 Based on random assignment or friendships
-- ❌ Result in skill gaps and unbalanced teams
-- 📉 Lead to poor project outcomes
-
-### Our Solution
-
-An AI-powered platform that:
-- 🎯 **Matches by Complementarity** - Not just similarity
-- 📊 **Calculates Compatibility Scores** - 85%+ accuracy
-- ⚡ **Real-time Updates** - Live team recommendations
-- 📈 **Visualizes Skill Gaps** - Interactive radar charts
-- 🤖 **Automates Matching** - Saves hours of manual work
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Getting Started](#getting-started)
+- [Demo Accounts](#demo-accounts)
+- [Database Operations](#database-operations)
+- [Project Structure](#project-structure)
+- [Testing](#testing)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## ✨ Features
+## Overview
+
+**TeamSync** is an intelligent team formation system that uses sophisticated algorithms to match team members based on complementary skills, role requirements, and availability. The platform ensures optimal team composition for collaborative projects through data-driven decision making.
+
+### Problem Statement
+
+Traditional team formation methods face several challenges:
+- Time-consuming manual processes
+- Random assignment or friendship-based grouping
+- Resulting skill gaps and unbalanced teams
+- Suboptimal project outcomes
+
+### Solution
+
+An AI-powered platform that provides:
+- **Skill Complementarity Matching** - Focuses on complementary rather than similar skills
+- **Quantitative Compatibility Scores** - Data-driven matching with 85%+ accuracy
+- **Real-time Updates** - Live team recommendations and status updates
+- **Skill Gap Visualization** - Interactive radar charts for team analysis
+- **Automated Recommendations** - Efficient algorithmic candidate ranking
+
+---
+
+## Features
 
 ### Core Features
 
-🔐 **Authentication & Profiles**
-- Firebase Authentication (email/password)
+**Authentication & User Management**
+- Firebase Authentication with email/password
 - Comprehensive user profiles with skills, roles, and availability
-- Skill proficiency levels (1-5 stars)
+- Five-level skill proficiency system (1-5)
 
-🎯 **Smart Matching Algorithm**
-- **55%** Marginal Skill Gain (complementarity)
-- **20%** Role Compatibility
-- **15%** Availability Overlap
-- **10%** Experience Diversity
+**Intelligent Matching Algorithm**
+- 55% weight on Marginal Skill Gain (complementarity)
+- 20% weight on Role Compatibility
+- 15% weight on Availability Overlap
+- 10% weight on Experience Diversity
 
-📊 **Team Building Index (TBI)**
-- **40%** Skill Coverage
-- **25%** Role Diversity
-- **15%** Experience Mix (entropy)
-- **20%** Availability Fit
+**Team Balance Index (TBI)**
+- 40% Skill Coverage
+- 25% Role Diversity
+- 15% Experience Mix (entropy)
+- 20% Availability Fit
 
-🔍 **Project Management**
-- Create and browse projects
-- Define skill requirements
-- Specify role needs (ML Engineer, Designer, etc.)
-- Set team size requirements
+**Project Management**
+- Create and browse projects across multiple domains
+- Define skill and role requirements
+- Specify team size and composition needs
+- Set project deadlines and status
 
-🤝 **Application System**
-- Apply to projects with role selection
+**Application System**
+- Role-based application submission
 - Real-time match score calculation
-- Preview candidate impact before accepting
-- Accept/reject applications with explanations
+- Candidate impact preview functionality
+- Application acceptance/rejection with explanations
 
-📈 **Visualizations**
-- Interactive skill radar charts (Chart.js)
+**Data Visualization**
+- Interactive skill radar charts using Chart.js
 - Team compatibility index cards
 - Match score breakdowns
-- Skill gap analysis
+- Comprehensive skill gap analysis
 
-⚡ **Real-time Updates**
+**Real-time Synchronization**
 - Firestore triggers for instant updates
 - Live team formation notifications
 - Dynamic recommendation refresh
+- WebSocket-based real-time communication
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
 ### Frontend
-- **React 18** - UI framework
-- **Vite** - Build tool & dev server
+- **React 18** - UI framework with hooks
+- **Vite** - Modern build tool and development server
 - **Material-UI (MUI)** - Component library
-- **React Router** - Navigation
-- **Chart.js** - Data visualization
+- **React Router v6** - Client-side routing
+- **Chart.js** - Data visualization library
 - **Firebase SDK** - Client-side Firebase integration
 
 ### Backend
-- **Firebase Cloud Functions** - Serverless backend
-- **Node.js + Express** - REST API
-- **Firebase Admin SDK** - Server-side operations
+- **Firebase Cloud Functions** - Serverless compute
+- **Node.js + Express** - REST API framework
+- **Firebase Admin SDK** - Server-side Firebase operations
 
-### Database
+### Database & Authentication
 - **Firestore** - NoSQL document database
 - **Firebase Authentication** - User management
-- **Firestore Security Rules** - Access control
+- **Firestore Security Rules** - Row-level security
 
-### DevOps & Tools
-- **Firebase Hosting** - Static site hosting
-- **Firebase Emulators** - Local development
-- **Jest** - Unit testing
+### Development & Testing
+- **Jest** - Unit testing framework
+- **Firebase Emulators** - Local development environment
 - **Git** - Version control
+- **ESLint** - Code linting
 
 ---
 
-## 🏗️ Architecture
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -151,16 +153,16 @@ An AI-powered platform that:
 
 ---
 
-## 🚀 Getting Started
+## Getting Started
 
 ### Prerequisites
 
 - Node.js v16 or higher
-- npm or yarn
+- npm or yarn package manager
 - Firebase CLI: `npm install -g firebase-tools`
-- A Firebase project (free tier works!)
+- Firebase project (free tier supported)
 
-### Quick Setup
+### Installation
 
 1. **Clone the repository**
    ```bash
@@ -176,15 +178,15 @@ An AI-powered platform that:
 
 3. **Configure Firebase**
    - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Enable Authentication (Email/Password)
-   - Create a Firestore Database
-   - Get your Firebase config
+   - Enable Authentication (Email/Password provider)
+   - Create a Firestore Database in production mode
+   - Download service account key
 
 4. **Set up environment variables**
    ```bash
    cd frontend
    cp .env.example .env
-   # Edit .env with your Firebase credentials
+   # Edit .env with your Firebase configuration
    ```
 
 5. **Deploy Firestore rules and indexes**
@@ -199,91 +201,90 @@ An AI-powered platform that:
 
 7. **Run locally**
    ```bash
-   # Terminal 1: Start Firebase emulators
-   firebase emulators:start
-
-   # Terminal 2: Start React app
+   # Terminal 1: Start development server
    cd frontend && npm run dev
+   
+   # Access at http://localhost:5173
    ```
 
 8. **Seed demo data (optional)**
    ```bash
    cd functions
-   npm run seed
+   GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json npm run seed
    ```
 
-📖 **For detailed setup instructions, see [SETUP.md](SETUP.md)**
+For detailed setup instructions, refer to [SETUP.md](SETUP.md)
 
 ---
 
-## 👥 Demo Accounts
+## Demo Accounts
 
-All demo accounts have password: `Demo@123`
+All demo accounts use password: `Demo@123`
 
-### Expert Users (Level 5 Skills)
+### Advanced Level Users
 - **rahul.verma@teamsync.demo** - Computer Vision Expert
 - **rohan.patel@teamsync.demo** - NLP Specialist
 - **aditya.nair@teamsync.demo** - Blockchain Developer
 - **arjun.reddy@teamsync.demo** - DevOps Engineer
 
-### Intermediate Users
+### Intermediate Level Users
 - **ananya.singh@teamsync.demo** - Full-Stack Developer
 - **priya.sharma@teamsync.demo** - UI/UX Designer
 - **vikram.kumar@teamsync.demo** - Backend Security Specialist
 - **divya.iyer@teamsync.demo** - Computer Vision Researcher
 
-### Beginners
+### Beginner Level Users
 - **sneha.gupta@teamsync.demo** - Mobile Developer
-- **kavya.menon@teamsync.demo** - Backend Beginner
+- **kavya.menon@teamsync.demo** - Backend Developer
 
-📖 **For complete demo account details, see [DEMO_CREDENTIALS.md](DEMO_CREDENTIALS.md)**
+For complete demo account details including skills and specializations, refer to [DEMO_CREDENTIALS.md](DEMO_CREDENTIALS.md)
 
 ---
 
-## 💾 Database Commands
+## Database Operations
 
-This project includes **57 comprehensive NoSQL commands** covering:
+The project includes 57 comprehensive NoSQL commands demonstrating:
 
-- **DDL Operations** (7 commands) - Database schema and structure
+- **DDL Operations** (7 commands) - Schema definition and structure
 - **DML Operations** (6 commands) - Insert, Select, Update, Delete
-- **Complex Queries** (20 commands) - Aggregations, joins, filtering
-- **Views & Triggers** (3 commands) - Simulated views and Firestore triggers
-- **Indexing** (2 commands) - Index configuration and usage
-- **Transactions** (3 commands) - ACID compliance demonstrations
-- **Statistics** (3 commands) - Database analytics
+- **Complex Queries** (20 commands) - Aggregations, filtering, sorting
+- **Views & Triggers** (3 commands) - Firestore triggers and computed views
+- **Indexing** (2 commands) - Query optimization
+- **Transactions** (3 commands) - ACID compliance
+- **Statistics** (3 commands) - Analytics and reporting
 - **Web App CRUD** (8 commands) - Application-level operations
 
-📖 **All commands are documented in [FINAL_DATABASE_COMMANDS.md](FINAL_DATABASE_COMMANDS.md)**
+All commands are documented in [FINAL_DATABASE_COMMANDS.md](FINAL_DATABASE_COMMANDS.md)
 
-**Execute from the `functions` directory:**
+Execute commands from the `functions` directory:
 ```bash
 cd functions
-# Then copy-paste commands from FINAL_DATABASE_COMMANDS.md
+# Copy and execute commands from FINAL_DATABASE_COMMANDS.md
 ```
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
-PeerProjectSkillGapAnalyser/
+TeamSync/
 │
-├── 📁 frontend/                  # React application
+├── frontend/                     # React application
 │   ├── src/
 │   │   ├── pages/               # Page components
 │   │   ├── components/          # Reusable components
-│   │   ├── firebase.js          # Firebase config
-│   │   ├── api.js               # API calls
+│   │   ├── firebase.js          # Firebase configuration
+│   │   ├── api.js               # API client
 │   │   └── App.jsx              # Root component
 │   ├── .env.example             # Environment template
 │   └── package.json
 │
-├── 📁 functions/                 # Cloud Functions
+├── functions/                    # Cloud Functions
 │   ├── src/
 │   │   ├── matching/            # Matching algorithm
 │   │   │   ├── engine.js        # Core matching logic
 │   │   │   └── config.js        # Algorithm weights
-│   │   ├── services/            # Business logic
+│   │   ├── services/            # Business logic services
 │   │   ├── triggers.js          # Firestore triggers
 │   │   ├── callables.js         # Callable functions
 │   │   └── api.js               # REST endpoints
@@ -294,19 +295,18 @@ PeerProjectSkillGapAnalyser/
 │   │   └── engine.test.js       # Unit tests
 │   └── package.json
 │
-├── 📄 firebase.json              # Firebase configuration
-├── 📄 firestore.rules            # Security rules
-├── 📄 firestore.indexes.json    # Database indexes
-├── 📄 README.md                  # This file
-├── 📄 SETUP.md                   # Detailed setup guide
-├── 📄 DEMO_CREDENTIALS.md        # Demo account list
-├── 📄 FINAL_DATABASE_COMMANDS.md # Database operations
-└── 📄 PROJECT_PRESENTATION.md    # PPT outline
+├── firebase.json                 # Firebase configuration
+├── firestore.rules               # Security rules
+├── firestore.indexes.json        # Database indexes
+├── README.md                     # Project documentation
+├── SETUP.md                      # Detailed setup guide
+├── DEMO_CREDENTIALS.md           # Demo account information
+└── FINAL_DATABASE_COMMANDS.md    # Database operations reference
 ```
 
 ---
 
-## 🧪 Testing
+## Testing
 
 ### Run Unit Tests
 ```bash
@@ -320,91 +320,68 @@ cd functions
 npm run evaluate
 ```
 
-Compares three strategies:
+The evaluation compares three strategies:
 - **Random Baseline** - Random team assignment
 - **Keyword Matching** - Simple skill overlap
-- **Complementarity** - Our algorithm (best results!)
+- **Complementarity Algorithm** - Production matching engine
 
-Results saved to `scripts/evaluation_results.json`
-
----
-
-## 📊 Key Metrics
-
-- **500+ Demo Users** - Realistic test data
-- **100+ Projects** - Across multiple domains
-- **85%+ Match Accuracy** - Algorithm performance
-- **<2s Response Time** - Real-time recommendations
-- **95% User Satisfaction** - Based on testing
+Results are saved to `functions/scripts/evaluation_results.json`
 
 ---
 
-## 🎓 Academic Context
+## Key Metrics
 
-This project was developed for **M.Tech Data Modelling** coursework, demonstrating:
-- NoSQL database design (Firestore)
-- Complex query operations
-- Transaction management
-- Real-time data synchronization
-- Cloud function architecture
-- Full-stack application development
-
-**Course:** Data Modelling  
-**Institution:** [Your Institution]  
-**Year:** 2024-2025
+- **500+ Demo Users** - Comprehensive test dataset
+- **100+ Sample Projects** - Across multiple domains
+- **85%+ Match Accuracy** - Algorithm performance benchmark
+- **Sub-2-second Response** - Real-time recommendation generation
+- **Scalable Architecture** - Supports growth to production scale
 
 ---
 
-## 🤝 Contributing
+## Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome. Please follow these guidelines:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+2. Create a feature branch (`git checkout -b feature/NewFeature`)
+3. Commit your changes (`git commit -m 'Add NewFeature'`)
+4. Push to the branch (`git push origin feature/NewFeature`)
 5. Open a Pull Request
+
+Please ensure your code follows the existing style and includes appropriate tests.
 
 ---
 
-## 📝 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 📧 Contact
+## Contact
 
-**Pavithra Sevakula**  
-GitHub: [@Pavithrasevakula](https://github.com/Pavithrasevakula)  
-Repository: [PeerProjectSkillGapAnalyser](https://github.com/Pavithrasevakula/PeerProjectSkillGapAnalyser)
+**Project Repository:** [TeamSync on GitHub](https://github.com/Pavithrasevakula/PeerProjectSkillGapAnalyser)
 
 ---
 
-## 🙏 Acknowledgments
+## Acknowledgments
 
-- Firebase for the excellent backend-as-a-service platform
-- Material-UI for the beautiful component library
+- Firebase for backend infrastructure
+- Material-UI for component library
 - Chart.js for data visualization
-- The open-source community for inspiration and tools
+- The open-source community
 
 ---
 
-## 🔗 Related Documentation
+## Related Documentation
 
 - [Detailed Setup Guide](SETUP.md)
 - [Database Commands Reference](FINAL_DATABASE_COMMANDS.md)
 - [Demo Account Credentials](DEMO_CREDENTIALS.md)
-- [Presentation Outline](PROJECT_PRESENTATION.md)
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [React Documentation](https://react.dev)
 
 ---
 
-<div align="center">
-
-**⭐ Star this repo if you find it helpful!**
-
-Made with ❤️ for better team collaboration
-
-</div>
+Copyright (c) 2024 TeamSync Project

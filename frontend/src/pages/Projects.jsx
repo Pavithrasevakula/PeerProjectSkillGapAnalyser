@@ -10,6 +10,15 @@ export default function Projects() {
     () => query(collection(db, "projects"), where("status", "==", "Open")), []);
   const skills = useLive(() => collection(db, "skills"), []).data || [];
   const roles = useLive(() => collection(db, "roles"), []).data || [];
+  
+  // Debug logging
+  if (projects && projects.length > 0) {
+    console.log('=== PROJECTS PAGE DEBUG ===');
+    console.log('First project:', projects[0]);
+    console.log('First project requiredSkills:', projects[0]?.requiredSkills);
+    console.log('First project requiredRoles:', projects[0]?.requiredRoles);
+    console.log('==========================');
+  }
   const [f, setF] = useState({ domain: "", skillId: "", roleId: "" });
 
   const domains = useMemo(() => [...new Set((projects || []).map((p) => p.domainArea))].sort(), [projects]);

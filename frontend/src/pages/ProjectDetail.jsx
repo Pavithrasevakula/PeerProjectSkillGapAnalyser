@@ -16,6 +16,14 @@ export default function ProjectDetail() {
   const uid = user.uid;
 
   const { data: project, error: projectError } = useLive(() => doc(db, "projects", id), [id]);
+  
+  // Debug logging
+  console.log('=== PROJECT DATA DEBUG ===');
+  console.log('Project:', project);
+  console.log('Required Roles:', project?.requiredRoles);
+  console.log('Required Skills:', project?.requiredSkills);
+  console.log('=========================');
+  
   const gap = useLive(() => doc(db, "projects", id, "team", "skillGap"), [id]).data;
   const history = useLive(() => query(collection(db, "projects", id, "tbiHistory"), orderBy("computedAt", "desc"), limit(10)), [id]).data;
   const members = useLive(() => collection(db, "projects", id, "teamMembers"), [id]).data || [];
