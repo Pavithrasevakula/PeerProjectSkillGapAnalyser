@@ -40,10 +40,7 @@ exports.applyToProject = onCall(async (request) => {
     throw new HttpsError("failed-precondition", "Add at least one skill to your profile before applying.");
   }
   
-  // Check if user is the display owner (project shows their name)
-  // Allow applying to demo projects even if you're the technical owner
-  const isDisplayOwner = project.ownerName && candidate.name && project.ownerName === candidate.name;
-  if (isDisplayOwner) {
+  if (project.ownerUserId === uid) {
     throw new HttpsError("invalid-argument", "You cannot apply to your own project.");
   }
   
@@ -59,6 +56,11 @@ exports.applyToProject = onCall(async (request) => {
   }
 
   const result = engine.scoreCandidate(project, team, candidate, { appliedRoleId: roleId });
+  
+  // Get applicant's video URL if available
+  const userDoc = await db.collection("users").doc(uid).get();
+  const videoIntroUrl = userDoc.exists ? userDoc.get("videoIntroUrl") : null;
+  
   await appRef.set({
     projectId,
     profileId: uid,
@@ -68,6 +70,7 @@ exports.applyToProject = onCall(async (request) => {
     status: "Pending",
     appliedAt: FieldValue.serverTimestamp(),
     decidedAt: null,
+    videoIntroUrl: videoIntroUrl || null,
   });
   return { matchScore: result.score, explanation: result.explanation };
 });

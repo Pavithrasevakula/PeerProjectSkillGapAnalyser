@@ -1,0 +1,38 @@
+rules_version = '2';
+
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper functions
+    function signedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    // Video introduction rules
+    match /video-intros/{userId}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && isOwner(userId)
+        && request.resource.size < 50 * 1024 * 1024
+        && request.resource.contentType.matches('video/.*');
+      allow delete: if signedIn() && isOwner(userId);
+    }
+    
+    // Profile images (future enhancement)
+    match /profile-images/{userId}/{fileName} {
+      allow read: if signedIn();
+      allow create, update: if signedIn() && isOwner(userId)
+        && request.resource.size < 5 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if signedIn() && isOwner(userId);
+    }
+    
+    // Project attachments are not exposed until project-scoped authorization is implemented.
+    match /project-files/{projectId}/{fileName} {
+      allow read, write: if false;
+    }
+  }
+}

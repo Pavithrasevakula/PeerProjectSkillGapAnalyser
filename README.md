@@ -1,12 +1,12 @@
-# TeamSync - Intelligent Team Formation System
+# TeamSync — Intelligent Team Formation System
 
-> Smart team building with AI-powered matching algorithms for collaborative projects
+> Smart team building with complementary-skill matching for collaborative projects.
 
 [![Firebase](https://img.shields.io/badge/Firebase-FFCA28?style=flat&logo=firebase&logoColor=black)](https://firebase.google.com/)
-[![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)](https://reactjs.org/)
+[![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)](https://react.dev/)
 [![Node.js](https://img.shields.io/badge/Node.js-339933?style=flat&logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Material-UI](https://img.shields.io/badge/Material--UI-007FFF?style=flat&logo=mui&logoColor=white)](https://mui.com/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=flat&logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
+[![Recharts](https://img.shields.io/badge/Recharts-Data_Visualization-244c43?style=flat)](https://recharts.org/)
 
 ---
 
@@ -18,138 +18,142 @@
 - [Architecture](#architecture)
 - [Getting Started](#getting-started)
 - [Demo Accounts](#demo-accounts)
-- [Database Operations](#database-operations)
+- [Database and Evaluation](#database-and-evaluation)
 - [Project Structure](#project-structure)
 - [Testing](#testing)
 - [Contributing](#contributing)
-- [License](#license)
+- [Related Documentation](#related-documentation)
 
 ---
 
 ## Overview
 
-**TeamSync** is an intelligent team formation system that uses sophisticated algorithms to match team members based on complementary skills, role requirements, and availability. The platform ensures optimal team composition for collaborative projects through data-driven decision making.
+**TeamSync** is a peer project team-formation application that matches collaborators using complementary skills, role requirements, experience diversity, and availability. It supports project discovery, profile management, applications, team formation, team analysis, chat, invitations, and gamification.
 
 ### Problem Statement
 
-Traditional team formation methods face several challenges:
-- Time-consuming manual processes
-- Random assignment or friendship-based grouping
-- Resulting skill gaps and unbalanced teams
-- Suboptimal project outcomes
+Traditional team formation often relies on manual selection, random assignment, or existing friendships. Those approaches can leave skill gaps, duplicate strengths, and unclear ownership of project roles.
 
 ### Solution
 
-An AI-powered platform that provides:
-- **Skill Complementarity Matching** - Focuses on complementary rather than similar skills
-- **Quantitative Compatibility Scores** - Data-driven matching with 85%+ accuracy
-- **Real-time Updates** - Live team recommendations and status updates
-- **Skill Gap Visualization** - Interactive radar charts for team analysis
-- **Automated Recommendations** - Efficient algorithmic candidate ranking
+TeamSync provides:
+
+- **Skill complementarity matching** — prioritizes marginal skill gain rather than simple similarity.
+- **Role-aware applications** — candidates apply for specific project roles and available slots.
+- **Availability analysis** — profiles and teams can compare shared working time.
+- **Team Balance Index** — summarizes skill coverage, role diversity, experience mix, and availability overlap.
+- **Real-time Firestore updates** — project, application, team, and chat state can update without manual refreshes.
+- **Achievement and leaderboard support** — backend gamification tracks collaboration milestones and points.
 
 ---
 
 ## Features
 
-### Core Features
+### Authentication and Profiles
 
-**Authentication & User Management**
-- Firebase Authentication with email/password
-- Comprehensive user profiles with skills, roles, and availability
-- Five-level skill proficiency system (1-5)
+- Firebase Authentication with email/password.
+- User profiles with department, study year, experience level, bio, skills, preferred roles, and availability.
+- Video introduction upload through Firebase Storage.
 
-**Intelligent Matching Algorithm**
-- 55% weight on Marginal Skill Gain (complementarity)
-- 20% weight on Role Compatibility
-- 15% weight on Availability Overlap
-- 10% weight on Experience Diversity
+### Intelligent Matching
 
-**Team Balance Index (TBI)**
-- 40% Skill Coverage
-- 25% Role Diversity
-- 15% Experience Mix (entropy)
-- 20% Availability Fit
+The matching engine scores candidates using configurable weights for:
 
-**Project Management**
-- Create and browse projects across multiple domains
-- Define skill and role requirements
-- Specify team size and composition needs
-- Set project deadlines and status
+- Marginal skill gain and complementarity.
+- Role compatibility and available role slots.
+- Availability overlap.
+- Experience diversity.
 
-**Application System**
-- Role-based application submission
-- Real-time match score calculation
-- Candidate impact preview functionality
-- Application acceptance/rejection with explanations
+The active weights are defined in [`functions/src/matching/config.js`](functions/src/matching/config.js).
 
-**Data Visualization**
-- Interactive skill radar charts using Chart.js
-- Team compatibility index cards
-- Match score breakdowns
-- Comprehensive skill gap analysis
+### Project Management
 
-**Real-time Synchronization**
-- Firestore triggers for instant updates
-- Live team formation notifications
-- Dynamic recommendation refresh
-- WebSocket-based real-time communication
+- Create, browse, edit, and close projects.
+- Define domains, deadlines, team sizes, required skills, and required roles.
+- Search and filter projects by text, domain, skill, and role.
+
+### Applications and Teams
+
+- Apply for a project role.
+- View application status and match score.
+- Withdraw pending applications.
+- Project owners can accept or reject applications.
+- Accepted applications populate team membership through backend triggers.
+- Candidate impact previews and skill-gap analysis are available to project owners.
+
+### Team Workspace
+
+- Team Lab scenario planning.
+- Growth profile preferences.
+- Team invitations.
+- Team chat channels.
+- Team availability overlap visualization.
+- Team Balance Index history.
+
+### Gamification
+
+The backend supports achievements, points, and leaderboard entries. The Dashboard displays achievement progress and leaderboard information when the corresponding data exists.
 
 ---
 
 ## Tech Stack
 
 ### Frontend
-- **React 18** - UI framework with hooks
-- **Vite** - Modern build tool and development server
-- **Material-UI (MUI)** - Component library
-- **React Router v6** - Client-side routing
-- **Chart.js** - Data visualization library
-- **Firebase SDK** - Client-side Firebase integration
+
+- **React 18.3.1** — UI framework.
+- **Vite 8.3.4** — development server and production build tool.
+- **Tailwind CSS 3.4.19** — utility styling and design tokens.
+- **React Router 7.18.4** — client-side routing.
+- **Firebase Web SDK 13.0.0** — Authentication, Firestore, Functions, and Storage clients.
+- **Recharts 2.x** — radar, bar, and line charts; chart sections are lazy-loaded.
+
+Versions are declared in [`frontend/package.json`](frontend/package.json); the lockfile records the resolved versions.
 
 ### Backend
-- **Firebase Cloud Functions** - Serverless compute
-- **Node.js + Express** - REST API framework
-- **Firebase Admin SDK** - Server-side Firebase operations
 
-### Database & Authentication
-- **Firestore** - NoSQL document database
-- **Firebase Authentication** - User management
-- **Firestore Security Rules** - Row-level security
+- **Firebase Cloud Functions 7.4.0** — callable functions, HTTP API, Firestore triggers, and scheduled jobs.
+- **Node.js 22** — Cloud Functions runtime.
+- **Express 4.x** — read-only REST facade under `/api`.
+- **Firebase Admin SDK 14.5.0** — server-side Firebase access.
 
-### Development & Testing
-- **Jest** - Unit testing framework
-- **Firebase Emulators** - Local development environment
-- **Git** - Version control
-- **ESLint** - Code linting
+### Database, Storage, and Security
+
+- **Cloud Firestore** — projects, users, applications, teams, analytics, chat, invitations, achievements, and leaderboard data.
+- **Firebase Authentication** — email/password accounts.
+- **Firebase Storage** — video introductions.
+- **Firestore and Storage Security Rules** — authorization and data validation.
+- **Firestore indexes** — query support for applications, team members, invitations, and project listings.
+
+### Development and Testing
+
+- **Jest 30.5.2** — backend matching-engine tests.
+- **Firebase CLI** — rules, indexes, Functions, and Hosting deployment.
+- **Firebase Emulator configuration** — ports are defined in [`firebase.json`](firebase.json); emulator binaries must be initialized locally before use.
 
 ---
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────────────┐
-│                    CLIENT (React)                        │
-│  • Authentication UI      • Project Management          │
-│  • Profile Management     • Application System           │
-│  • Skill Radar Charts     • Team Dashboard              │
+│                    CLIENT (React)                       │
+│  Auth • Profiles • Projects • Applications • Team Lab   │
+│  Dashboard • Chat • Matching UI • Gamification UI       │
 └────────────────────┬────────────────────────────────────┘
-                     │ HTTPS / REST API
+                     │ Firebase SDK / HTTPS callable API
 ┌────────────────────▼────────────────────────────────────┐
-│              CLOUD FUNCTIONS (Node.js)                   │
-│  • Matching Engine        • Team Formation Logic        │
-│  • Callable Functions     • HTTP Endpoints              │
-│  • Firestore Triggers     • Recommendation Service      │
+│              CLOUD FUNCTIONS (Node.js 22)               │
+│  Matching • Applications • Team triggers • Chat         │
+│  Recommendations • Gamification • REST read facade      │
 └────────────────────┬────────────────────────────────────┘
-                     │ Admin SDK
+                     │ Firebase Admin SDK
 ┌────────────────────▼────────────────────────────────────┐
-│              FIRESTORE DATABASE (NoSQL)                  │
-│                                                          │
-│  Collections:                Subcollections:            │
-│  ├─ users                    └─ applications            │
-│  ├─ projects                    (per project)           │
-│  └─ teams                                               │
-└──────────────────────────────────────────────────────────┘
+│                  FIREBASE SERVICES                      │
+│  Authentication • Firestore • Storage • Hosting         │
+└─────────────────────────────────────────────────────────┘
 ```
+
+Firestore uses project subcollections such as `applications`, `teamMembers`, `team`, `tbiHistory`, `recommendations`, and `channels/messages` rather than a separate top-level `teams` collection.
 
 ---
 
@@ -157,230 +161,195 @@ An AI-powered platform that provides:
 
 ### Prerequisites
 
-- Node.js v16 or higher
-- npm or yarn package manager
-- Firebase CLI: `npm install -g firebase-tools`
-- Firebase project (free tier supported)
+- Node.js 22 or a compatible current Node.js release for local development.
+- npm.
+- Firebase CLI: `npm install -g firebase-tools`.
+- Access to the Firebase project configured in `.firebaserc`, or your own Firebase project.
 
 ### Installation
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/Pavithrasevakula/PeerProjectSkillGapAnalyser.git
-   cd PeerProjectSkillGapAnalyser
-   ```
-
-2. **Install dependencies**
-   ```bash
-   cd functions && npm install
-   cd ../frontend && npm install
-   ```
-
-3. **Configure Firebase**
-   - Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-   - Enable Authentication (Email/Password provider)
-   - Create a Firestore Database in production mode
-   - Download service account key
-
-4. **Set up environment variables**
-   ```bash
+1. **Install frontend dependencies**
+   ```powershell
    cd frontend
-   cp .env.example .env
-   # Edit .env with your Firebase configuration
+   npm install
    ```
+
+2. **Install Functions dependencies**
+   ```powershell
+   cd ..\functions
+   npm install
+   ```
+
+3. **Configure the frontend**
+   ```powershell
+   cd ..\frontend
+   Copy-Item .env.example .env
+   # Fill .env with the Firebase Web App configuration.
+   # Never commit .env.
+   ```
+
+4. **Run the frontend locally**
+   ```powershell
+   npm run dev
+   ```
+
+   Open `http://localhost:5173`.
 
 5. **Deploy Firestore rules and indexes**
-   ```bash
-   firebase deploy --only firestore:rules,firestore:indexes
+   ```powershell
+   firebase deploy --only firestore --project YOUR_PROJECT_ID
    ```
 
-6. **Deploy Cloud Functions**
-   ```bash
-   firebase deploy --only functions
+6. **Deploy Storage rules**
+   ```powershell
+   firebase deploy --only storage --project YOUR_PROJECT_ID
    ```
 
-7. **Run locally**
-   ```bash
-   # Terminal 1: Start development server
-   cd frontend && npm run dev
-   
-   # Access at http://localhost:5173
+7. **Build and deploy Hosting**
+   ```powershell
+   cd frontend
+   npm run build
+   cd ..
+   firebase deploy --only hosting --project YOUR_PROJECT_ID
    ```
 
-8. **Seed demo data (optional)**
-   ```bash
-   cd functions
-   GOOGLE_APPLICATION_CREDENTIALS=service-account-key.json npm run seed
+8. **Deploy Cloud Functions**
+   ```powershell
+   firebase deploy --only functions --project YOUR_PROJECT_ID
    ```
 
-For detailed setup instructions, refer to [SETUP.md](SETUP.md)
+For detailed setup guidance, see [`SETUP.md`](SETUP.md) and [`FIREBASE_STORAGE_SETUP.md`](FIREBASE_STORAGE_SETUP.md).
+
+### Optional data setup
+
+The default synthetic dataset is generated by [`functions/scripts/generateData.js`](functions/scripts/generateData.js) and written by [`functions/scripts/seed.js`](functions/scripts/seed.js): 120 users and 35 projects by default.
+
+```powershell
+cd functions
+$env:GOOGLE_APPLICATION_CREDENTIALS="service-account-key.json"
+npm run seed
+```
+
+The service-account key is intentionally ignored and must not be committed.
 
 ---
 
 ## Demo Accounts
 
-All demo accounts use password: `Demo@123`
+The repository includes documented demo accounts in [`DEMO_CREDENTIALS.md`](DEMO_CREDENTIALS.md). All listed demo accounts use the password documented there.
 
-### Advanced Level Users
-- **rahul.verma@teamsync.demo** - Computer Vision Expert
-- **rohan.patel@teamsync.demo** - NLP Specialist
-- **aditya.nair@teamsync.demo** - Blockchain Developer
-- **arjun.reddy@teamsync.demo** - DevOps Engineer
-
-### Intermediate Level Users
-- **ananya.singh@teamsync.demo** - Full-Stack Developer
-- **priya.sharma@teamsync.demo** - UI/UX Designer
-- **vikram.kumar@teamsync.demo** - Backend Security Specialist
-- **divya.iyer@teamsync.demo** - Computer Vision Researcher
-
-### Beginner Level Users
-- **sneha.gupta@teamsync.demo** - Mobile Developer
-- **kavya.menon@teamsync.demo** - Backend Developer
-
-For complete demo account details including skills and specializations, refer to [DEMO_CREDENTIALS.md](DEMO_CREDENTIALS.md)
+Use a dedicated non-production account when testing destructive or data-changing workflows.
 
 ---
 
-## Database Operations
+## Database and Evaluation
 
-The project includes 57 comprehensive NoSQL commands demonstrating:
+Database behavior is defined by:
 
-- **DDL Operations** (7 commands) - Schema definition and structure
-- **DML Operations** (6 commands) - Insert, Select, Update, Delete
-- **Complex Queries** (20 commands) - Aggregations, filtering, sorting
-- **Views & Triggers** (3 commands) - Firestore triggers and computed views
-- **Indexing** (2 commands) - Query optimization
-- **Transactions** (3 commands) - ACID compliance
-- **Statistics** (3 commands) - Analytics and reporting
-- **Web App CRUD** (8 commands) - Application-level operations
+- [`firestore.rules`](firestore.rules) — Firestore authorization and validation.
+- [`firestore.indexes.json`](firestore.indexes.json) — Firestore composite indexes.
+- [`storage.rules`](storage.rules) — Storage authorization and upload constraints.
+- [`functions/scripts/seed.js`](functions/scripts/seed.js) — synthetic Firestore data setup.
+- [`functions/scripts/evaluate.js`](functions/scripts/evaluate.js) — in-memory matching-engine evaluation.
+- [`DATABASE_REPORT_COMPLETE.docx`](DATABASE_REPORT_COMPLETE.docx) — project database report.
 
-All commands are documented in [FINAL_DATABASE_COMMANDS.md](FINAL_DATABASE_COMMANDS.md)
+Run the matching evaluation with:
 
-Execute commands from the `functions` directory:
-```bash
+```powershell
 cd functions
-# Copy and execute commands from FINAL_DATABASE_COMMANDS.md
+npm run evaluate
 ```
+
+The evaluation writes the generated `functions/scripts/evaluation_results.json` file. It is an output artifact and is not expected to exist until the evaluation is run.
 
 ---
 
 ## Project Structure
 
-```
+```text
 TeamSync/
-│
-├── frontend/                     # React application
-│   ├── src/
-│   │   ├── pages/               # Page components
-│   │   ├── components/          # Reusable components
-│   │   ├── firebase.js          # Firebase configuration
-│   │   ├── api.js               # API client
-│   │   └── App.jsx              # Root component
-│   ├── .env.example             # Environment template
+├── frontend/
+│   ├── public/                  # Manifest, service worker, offline page, favicon
+│   ├── src/pages/               # Login, Dashboard, Projects, Profile, Team Lab, etc.
+│   ├── src/components/          # Reusable UI, chat, charts, video, and scheduler components
+│   ├── src/firebase.js          # Firebase client initialization
+│   ├── src/api.js               # Callable Functions client wrappers
+│   ├── src/auth.jsx             # Auth and account context
+│   ├── src/index.css            # Tailwind/global design system
 │   └── package.json
-│
-├── functions/                    # Cloud Functions
-│   ├── src/
-│   │   ├── matching/            # Matching algorithm
-│   │   │   ├── engine.js        # Core matching logic
-│   │   │   └── config.js        # Algorithm weights
-│   │   ├── services/            # Business logic services
-│   │   ├── triggers.js          # Firestore triggers
-│   │   ├── callables.js         # Callable functions
-│   │   └── api.js               # REST endpoints
-│   ├── scripts/
-│   │   ├── seed.js              # Demo data generator
-│   │   └── evaluate.js          # Algorithm evaluation
-│   ├── test/
-│   │   └── engine.test.js       # Unit tests
+├── functions/
+│   ├── src/matching/            # Matching engine and configuration
+│   ├── src/services/             # Derived data and team services
+│   ├── src/callables.js          # Authenticated callable workflows
+│   ├── src/triggers.js           # Firestore triggers
+│   ├── src/chat.js               # Chat Functions
+│   ├── src/gamification.js       # Achievement and leaderboard Functions
+│   ├── scripts/                  # Seed, evaluation, and demo setup scripts
+│   ├── test/                     # Jest tests
 │   └── package.json
-│
-├── firebase.json                 # Firebase configuration
-├── firestore.rules               # Security rules
-├── firestore.indexes.json        # Database indexes
+├── firebase.json                 # Firebase deployment and emulator configuration
+├── firestore.rules               # Firestore security rules
+├── firestore.indexes.json        # Firestore indexes
+├── storage.rules                 # Storage security rules
 ├── README.md                     # Project documentation
 ├── SETUP.md                      # Detailed setup guide
 ├── DEMO_CREDENTIALS.md           # Demo account information
-└── FINAL_DATABASE_COMMANDS.md    # Database operations reference
+└── requirements.pdf              # Project requirements
 ```
 
 ---
 
 ## Testing
 
-### Run Unit Tests
-```bash
+### Frontend production build
+
+```powershell
+cd frontend
+npm run build
+```
+
+### Backend unit tests
+
+```powershell
 cd functions
 npm test
 ```
 
-### Evaluate Matching Algorithm
-```bash
+### Matching-engine evaluation
+
+```powershell
 cd functions
 npm run evaluate
 ```
 
-The evaluation compares three strategies:
-- **Random Baseline** - Random team assignment
-- **Keyword Matching** - Simple skill overlap
-- **Complementarity Algorithm** - Production matching engine
-
-Results are saved to `functions/scripts/evaluation_results.json`
-
----
-
-## Key Metrics
-
-- **500+ Demo Users** - Comprehensive test dataset
-- **100+ Sample Projects** - Across multiple domains
-- **85%+ Match Accuracy** - Algorithm performance benchmark
-- **Sub-2-second Response** - Real-time recommendation generation
-- **Scalable Architecture** - Supports growth to production scale
+The unit tests cover availability helpers, skill coverage, complementarity scoring, role fit, Team Balance Index, and candidate-impact previews.
 
 ---
 
 ## Contributing
 
-Contributions are welcome. Please follow these guidelines:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/NewFeature`)
-3. Commit your changes (`git commit -m 'Add NewFeature'`)
-4. Push to the branch (`git push origin feature/NewFeature`)
-5. Open a Pull Request
-
-Please ensure your code follows the existing style and includes appropriate tests.
-
----
-
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## Contact
-
-**Project Repository:** [TeamSync on GitHub](https://github.com/Pavithrasevakula/PeerProjectSkillGapAnalyser)
-
----
-
-## Acknowledgments
-
-- Firebase for backend infrastructure
-- Material-UI for component library
-- Chart.js for data visualization
-- The open-source community
+1. Create a feature branch.
+2. Preserve existing business logic unless a verified defect requires a change.
+3. Run the frontend build and backend tests before submitting changes.
+4. Do not commit `.env`, service-account keys, generated `dist` output, dependency directories, or temporary files.
+5. Include security-rule and index changes with the feature that requires them.
 
 ---
 
 ## Related Documentation
 
-- [Detailed Setup Guide](SETUP.md)
-- [Database Commands Reference](FINAL_DATABASE_COMMANDS.md)
-- [Demo Account Credentials](DEMO_CREDENTIALS.md)
+- [`SETUP.md`](SETUP.md)
+- [`DEMO_CREDENTIALS.md`](DEMO_CREDENTIALS.md)
+- [`FIREBASE_STORAGE_SETUP.md`](FIREBASE_STORAGE_SETUP.md)
+- [`FINAL_AUDIT_REPORT_2026-10-17.md`](FINAL_AUDIT_REPORT_2026-10-17.md)
+- [`FINAL_COMPREHENSIVE_TEST_REPORT.md`](FINAL_COMPREHENSIVE_TEST_REPORT.md)
+- [`SECURITY_ALERT.md`](SECURITY_ALERT.md)
+- [`DATABASE_REPORT_COMPLETE.docx`](DATABASE_REPORT_COMPLETE.docx)
 - [Firebase Documentation](https://firebase.google.com/docs)
 - [React Documentation](https://react.dev)
+- [Vite Documentation](https://vite.dev/)
+- [Tailwind CSS Documentation](https://tailwindcss.com/docs)
+- [Recharts Documentation](https://recharts.org/en-US/)
 
 ---
 

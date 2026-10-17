@@ -1,100 +1,63 @@
 import { useEffect, useState } from "react";
-import { addDoc, collection, deleteDoc, doc, serverTimestamp, setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth.jsx";
 import { useLive } from "../hooks";
-import { errorMessage } from "../api";
+import VideoIntro from "../components/VideoIntro.jsx";
+import AdvancedScheduler from "../components/AdvancedScheduler.jsx";
 
 const DAYS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-// Searchable dropdown component
-function SearchableSelect({ options, value, onSelect, placeholder, allowCustom }) {
+function SearchableSelect({ options, value, onSelect, placeholder }) {
   const [isOpen, setIsOpen] = useState(false);
+  const [isMouseInDropdown, setIsMouseInDropdown] = useState(false);
   
   const filtered = options.filter(opt => 
     opt.name.toLowerCase().includes((value || "").toLowerCase())
   );
   
-  const handleSelect = (option) => {
-    if (onSelect) {
-      onSelect(option);
-    }
-    setIsOpen(false);
-  };
-  
-  const handleChange = (e) => {
-    const inputValue = e.target.value;
-    setIsOpen(true);
-    // Update parent state with name only, clear ID when typing
-    if (onSelect) {
-      onSelect({ id: null, name: inputValue });
+  const handleBlur = () => {
+    // Only close if mouse is not in dropdown
+    if (!isMouseInDropdown) {
+      setIsOpen(false);
     }
   };
   
   return (
-    <div style={{ position: 'relative', flex: 1, minWidth: '200px' }}>
+    <div className="relative flex-1 min-w-[200px]">
       <input
         type="text"
         value={value || ""}
-        onChange={handleChange}
+        onChange={(e) => {
+          setIsOpen(true);
+          onSelect({ id: null, name: e.target.value });
+        }}
         onFocus={() => setIsOpen(true)}
-        onBlur={() => setTimeout(() => setIsOpen(false), 250)}
+        onBlur={handleBlur}
         placeholder={placeholder}
-        style={{ width: '100%' }}
+        className="input w-full"
         autoComplete="off"
       />
       {isOpen && value && filtered.length > 0 && (
-        <div style={{
-          position: 'absolute',
-          top: '100%',
-          left: 0,
-          right: 0,
-          maxHeight: '280px',
-          overflowY: 'auto',
-          background: 'var(--card)',
-          border: '1px solid var(--line)',
-          borderRadius: '8px',
-          boxShadow: 'var(--shadow-md)',
-          zIndex: 1000,
-          marginTop: '4px'
-        }}>
+        <div 
+          className="absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-white border border-neutral-200 rounded-lg shadow-lg z-50"
+          onMouseEnter={() => setIsMouseInDropdown(true)}
+          onMouseLeave={() => setIsMouseInDropdown(false)}
+        >
           {filtered.map(option => (
             <div
               key={option.id}
               onMouseDown={(e) => {
                 e.preventDefault();
-                handleSelect(option);
+                onSelect(option);
+                setIsOpen(false);
+                setIsMouseInDropdown(false);
               }}
-              style={{
-                padding: '0.875rem 1rem',
-                cursor: 'pointer',
-                borderBottom: '1px solid var(--line)',
-                fontSize: '0.9375rem',
-                transition: 'all 0.15s ease',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'var(--accent-light)';
-                e.currentTarget.style.color = 'var(--accent-dark)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.color = 'inherit';
-              }}
+              className="px-4 py-3 cursor-pointer hover:bg-primary-50 border-b border-neutral-100 last:border-0 flex items-center justify-between transition-colors"
             >
-              <span style={{ fontWeight: 500 }}>{option.name}</span>
+              <span className="font-medium text-neutral-800">{option.name}</span>
               {option.category && (
-                <span style={{ 
-                  fontSize: '0.75rem', 
-                  color: 'var(--muted)',
-                  padding: '0.25rem 0.5rem',
-                  background: 'var(--bg-secondary)',
-                  borderRadius: '4px'
-                }}>
-                  {option.category}
-                </span>
+                <span className="badge-gray text-xs">{option.category}</span>
               )}
             </div>
           ))}
@@ -119,10 +82,9 @@ export default function Profile() {
   const [role, setRole] = useState({ roleId: "", roleName: "", rank: 1 });
   const [slot, setSlot] = useState({ dayOfWeek: "Mon", startTime: "10:00", endTime: "12:00" });
   const [msg, setMsg] = useState({ text: "", error: false });
+  const [busyAction, setBusyAction] = useState(false);
 
   useEffect(() => {
-    // Only initialize form when we have account data for the first time
-    // This prevents overwriting form data during auth restoration
     if (account && !form) {
       setForm({ 
         fullName: account.fullName || "", 
@@ -132,7 +94,6 @@ export default function Profile() {
         experienceLevel: account.profile?.experienceLevel || "Beginner",
         bio: account.profile?.bio || ""
       });
-      // Auto-enable editing if profile is incomplete
       if (!account.profile?.department) {
         setIsEditing(true);
       }
@@ -140,372 +101,483 @@ export default function Profile() {
   }, [account, form]);
 
   const run = async (fn, ok) => {
-    try { 
-      await fn(); 
+    if (busyAction) return;
+    setBusyAction(true);
+    try {
+      await fn();
       if (ok) {
         setMsg({ text: ok, error: false });
-        // Clear success messages after 3 seconds
         setTimeout(() => setMsg({ text: "", error: false }), 3000);
       }
-    }
-    catch (err) { 
-      setMsg({ text: `${errorMessage(err)} (please retry)`, error: true }); 
-      // Keep error messages visible
+    } catch (err) {
+      setMsg({ text: err.message || "Operation failed. Please try again.", error: true });
+    } finally {
+      setBusyAction(false);
     }
   };
 
-  if (!form) return <p className="muted" style={{ textAlign: 'center', padding: '3rem' }}>Loading profile...</p>;
-  const set = (k) => (e) => setForm({ ...form, [k]: e.target.value });
-  
-  const isProfileIncomplete = !form.department || !form.department.trim();
-
-  const saveProfile = async (e) => {
-    e.preventDefault();
-    await run(() => updateDoc(doc(db, "users", uid), {
-      fullName: form.fullName.trim(),
-      userRole: form.userRole,
+  const saveProfile = () => {
+    if (!form.fullName.trim() || !form.department.trim()) {
+      setMsg({ text: "Full name and department are required.", error: true });
+      return;
+    }
+    return run(async () => {
+    await setDoc(doc(db, "users", uid), { 
+      fullName: form.fullName, 
+      userRole: form.userRole, 
       profile: {
-        department: form.department, yearOfStudy: Number(form.yearOfStudy),
-        experienceLevel: form.experienceLevel, bio: form.bio || "", updatedAt: serverTimestamp(),
-      },
-    }), "Profile saved successfully!");
+        department: form.department,
+        yearOfStudy: parseInt(form.yearOfStudy),
+        experienceLevel: form.experienceLevel,
+        bio: form.bio
+      }
+    }, { merge: true });
     setIsEditing(false);
+  }, "Profile updated successfully");
   };
 
-  const addSkill = async () => {
-    if (!skill.skillName.trim()) return;
-    
-    // Check if skill already exists for this user
-    const isDuplicate = mySkills.some(s => 
-      s.skillName.toLowerCase() === skill.skillName.trim().toLowerCase()
-    );
-    
-    if (isDuplicate) {
-      setMsg({ text: "You've already added this skill!", error: true });
+  const addSkill = () => {
+    if (!skill.skillName.trim()) {
+      setMsg({ text: "Choose or enter a skill first.", error: true });
       return;
     }
-    
-    // Check if it's an existing skill
-    let skillId = skill.skillId;
-    let skillName = skill.skillName.trim();
-    
-    if (!skillId) {
-      // It's a custom skill - create it in /skills collection first
-      skillId = `sk_${skillName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
-      
-      // Create the skill in master collection (try/catch to handle if it already exists)
-      try {
-        await setDoc(doc(db, "skills", skillId), { 
-          skillName: skillName, 
-          skillCategory: "Custom" 
-        });
-      } catch (err) {
-        // Skill might already exist, that's okay - continue
-        console.log("Skill may already exist in master list, continuing...");
-      }
+    return run(async () => {
+    const finalSkillId = skill.skillId || skill.skillName.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!skill.skillId) {
+      await setDoc(doc(db, "skills", finalSkillId), {
+        skillName: skill.skillName.trim(),
+        skillCategory: "User Added"
+      });
     }
-    
-    // Add to user's skills
-    await run(() => setDoc(doc(db, "users", uid, "skills", skillId), {
-      skillId: skillId, 
-      skillName: skillName,
-      proficiencyLevel: Number(skill.level), 
-      yearsOfExperience: Number(skill.years),
-    }), "Skill added successfully!");
-    
+    await addDoc(collection(db, "users", uid, "skills"), {
+      skillId: finalSkillId,
+      skillName: skill.skillName.trim(),
+      proficiencyLevel: skill.level,
+      yearsOfExperience: skill.years
+    });
     setSkill({ skillId: "", skillName: "", level: 3, years: 1 });
+  }, "Skill added");
   };
 
-  const addRole = async () => {
-    if (!role.roleName.trim()) return;
-    
-    // Check if role already exists for this user
-    const isDuplicate = myRoles.some(r => 
-      r.roleName.toLowerCase() === role.roleName.trim().toLowerCase()
-    );
-    
-    if (isDuplicate) {
-      setMsg({ text: "You've already added this role!", error: true });
+  const removeSkill = (id) => run(() => deleteDoc(doc(db, "users", uid, "skills", id)), "Skill removed");
+
+  const addRole = () => {
+    if (!role.roleName.trim()) {
+      setMsg({ text: "Choose or enter a role first.", error: true });
       return;
     }
-    
-    // Check if it's an existing role
-    let roleId = role.roleId;
-    let roleName = role.roleName.trim();
-    
-    if (!roleId) {
-      // It's a custom role - create it in /roles collection first
-      roleId = `r_${roleName.toLowerCase().replace(/[^a-z0-9]+/g, "_")}`;
-      
-      // Create the role in master collection (try/catch to handle if it already exists)
-      try {
-        await setDoc(doc(db, "roles", roleId), { roleName: roleName });
-      } catch (err) {
-        // Role might already exist, that's okay - continue
-        console.log("Role may already exist in master list, continuing...");
-      }
+    return run(async () => {
+    const finalRoleId = role.roleId || role.roleName.trim().toLowerCase().replace(/\s+/g, '-');
+    if (!role.roleId) {
+      await setDoc(doc(db, "roles", finalRoleId), {
+        roleName: role.roleName.trim(),
+        category: "User Added"
+      });
     }
-    
-    // Add to user's preferred roles
-    await run(() => setDoc(doc(db, "users", uid, "preferredRoles", roleId), {
-      roleId: roleId, 
-      roleName: roleName, 
-      preferenceRank: Number(role.rank),
-    }), "Role added successfully!");
-    
+    await addDoc(collection(db, "users", uid, "preferredRoles"), {
+      roleId: finalRoleId,
+      roleName: role.roleName.trim(),
+      preferenceRank: role.rank
+    });
     setRole({ roleId: "", roleName: "", rank: 1 });
+  }, "Role added");
   };
+
+  const removeRole = (id) => run(() => deleteDoc(doc(db, "users", uid, "preferredRoles", id)), "Role removed");
 
   const addSlot = () => {
-    // Check for duplicate time slots
-    const isDuplicate = slots.some(s => 
-      s.dayOfWeek === slot.dayOfWeek && 
-      s.startTime === slot.startTime && 
-      s.endTime === slot.endTime
-    );
-    
-    if (isDuplicate) {
-      setMsg({ text: "This time slot already exists!", error: true });
+    if (!slot.startTime || !slot.endTime || slot.endTime <= slot.startTime) {
+      setMsg({ text: "End time must be later than start time.", error: true });
       return;
     }
-    
-    // Validate time range
-    if (slot.endTime <= slot.startTime) {
-      setMsg({ text: "End time must be after start time!", error: true });
-      return;
-    }
-    
-    run(() => addDoc(collection(db, "users", uid, "availability"), slot), "Time slot added");
+    return run(() => 
+      addDoc(collection(db, "users", uid, "availability"), slot), "Availability added");
   };
 
-  const skillOptions = skills.map(s => ({ id: s.id, name: s.skillName, category: s.skillCategory }));
-  const roleOptions = roles.map(r => ({ id: r.id, name: r.roleName }));
+  const removeSlot = (id) => run(() => 
+    deleteDoc(doc(db, "users", uid, "availability", id)), "Availability removed");
 
-  return (
-    <div className="stack">
-      <div style={{ marginBottom: '1rem' }}>
-        <div className="row between" style={{ alignItems: 'center' }}>
-          <div>
-            <h1>My Profile</h1>
-            <p className="muted">Manage your profile, skills, roles, and availability</p>
-          </div>
-          {!isEditing && !isProfileIncomplete && (
-            <button onClick={() => setIsEditing(true)} style={{ background: 'var(--accent)', color: 'white' }}>
-              Edit Profile
-            </button>
-          )}
+  if (!form) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600"></div>
         </div>
       </div>
+    );
+  }
 
-      {isProfileIncomplete && !isEditing && (
-        <div className="card" style={{ background: 'var(--warning-bg)', border: '1px solid var(--warning)', padding: '1rem' }}>
-          <p style={{ margin: 0, color: 'var(--warning-text)' }}>
-            <strong>⚠️ Complete your profile</strong> - Add your department and other details to apply for projects
-          </p>
+  return (
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-semibold text-neutral-800 mb-1">My Profile</h1>
+          <p className="text-neutral-500">Manage your personal information and preferences</p>
         </div>
-      )}
+        {!isEditing && (
+          <button onClick={() => setIsEditing(true)} className="btn-primary">
+            Edit Profile
+          </button>
+        )}
+      </div>
 
-      {isEditing ? (
-        <form className="card" onSubmit={saveProfile}>
-          <h2>Personal Information</h2>
-          <div className="grid">
-            <label>Full name<input required value={form.fullName} onChange={set("fullName")} placeholder="Your full name" /></label>
-            <label>I am a
-              <select value={form.userRole} onChange={set("userRole")}>
-                <option value="Student">Student</option><option value="Owner">Project owner</option><option value="Both">Both</option>
-              </select>
-            </label>
-            <label>Department<input required value={form.department} onChange={set("department")} placeholder="e.g., MTech CSE" /></label>
-            <label>Year of study
-              <select value={form.yearOfStudy} onChange={set("yearOfStudy")}>{[1, 2, 3, 4, 5].map((y) => <option key={y}>{y}</option>)}</select>
-            </label>
-            <label>Experience level
-              <select value={form.experienceLevel} onChange={set("experienceLevel")}>
-                {["Beginner", "Intermediate", "Advanced"].map((l) => <option key={l}>{l}</option>)}
-              </select>
-            </label>
-          </div>
-          <label>Bio<textarea rows={3} value={form.bio || ""} onChange={set("bio")} placeholder="Tell us about yourself..." /></label>
-          <div className="row" style={{ gap: '1rem' }}>
-            <button type="submit">Save Profile</button>
-            {!isProfileIncomplete && (
-              <button type="button" onClick={() => setIsEditing(false)} style={{ background: 'transparent', color: 'var(--text)' }}>
-                Cancel
-              </button>
+      {msg.text && (
+        <div className={`p-4 rounded-lg border ${msg.error ? 'bg-error-50 text-error-700 border-error-200' : 'bg-success-50 text-success-700 border-success-200'}`}>
+          <div className="flex items-center gap-2">
+            {msg.error ? (
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            ) : (
+              <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
             )}
+            <span className="font-medium">{msg.text}</span>
           </div>
-          {msg.text && <p className={msg.error ? "error" : "ok"}>{msg.text}</p>}
-        </form>
-      ) : (
-        <div className="card">
-          <h2>Personal Information</h2>
-          <div className="grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))' }}>
-            <div>
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Full Name</p>
-              <p style={{ fontWeight: 500 }}>{form.fullName || '-'}</p>
-            </div>
-            <div>
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Role</p>
-              <p style={{ fontWeight: 500 }}>{form.userRole}</p>
-            </div>
-            <div>
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Department</p>
-              <p style={{ fontWeight: 500 }}>{form.department || '-'}</p>
-            </div>
-            <div>
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Year of Study</p>
-              <p style={{ fontWeight: 500 }}>Year {form.yearOfStudy}</p>
-            </div>
-            <div>
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.25rem' }}>Experience Level</p>
-              <p style={{ fontWeight: 500 }}>{form.experienceLevel}</p>
-            </div>
-          </div>
-          {form.bio && (
-            <div style={{ marginTop: '1.5rem', paddingTop: '1.5rem', borderTop: '1px solid var(--line)' }}>
-              <p className="muted" style={{ fontSize: '0.875rem', marginBottom: '0.5rem' }}>Bio</p>
-              <p style={{ lineHeight: '1.6' }}>{form.bio}</p>
-            </div>
-          )}
         </div>
       )}
 
-      <section className="card">
-        <h2>Skills</h2>
-        <p className="muted" style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-          Add your technical and soft skills to help match with relevant projects
-        </p>
-        <p className="muted" style={{ marginBottom: '1rem', fontSize: '0.8125rem', fontStyle: 'italic' }}>
-          <strong>Level guide:</strong> 1=Beginner, 2=Basic, 3=Intermediate, 4=Advanced, 5=Expert
-        </p>
-        <div className="row">
-          <SearchableSelect
-            options={skillOptions}
-            value={skill.skillName}
-            onSelect={(option) => setSkill({ ...skill, skillId: option.id, skillName: option.name })}
-            placeholder="Search skills... (e.g., React, Python)"
-          />
-          <label className="inline">Level
-            <select value={skill.level} onChange={(e) => setSkill({ ...skill, level: e.target.value })} title="1=Beginner, 2=Basic, 3=Intermediate, 4=Advanced, 5=Expert">
-              {[1, 2, 3, 4, 5].map((n) => <option key={n}>{n}</option>)}
-            </select>
-          </label>
-          <label className="inline">Years
-            <input 
-              type="number" 
-              min="0" 
-              max="20" 
-              step="0.5" 
-              value={skill.years} 
-              onChange={(e) => setSkill({ ...skill, years: e.target.value })} 
-              style={{ width: '80px' }} 
-              title="Years of experience with this skill"
+      <div className="card p-6 space-y-6">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="w-12 h-12 rounded-full bg-primary-100 flex items-center justify-center">
+            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-neutral-800">Basic Information</h2>
+            <p className="text-sm text-neutral-500">Your personal and academic details</p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Full Name</label>
+            <input
+              type="text"
+              value={form.fullName}
+              onChange={(e) => setForm({ ...form, fullName: e.target.value })}
+              disabled={!isEditing}
+              className="input"
             />
-          </label>
-          <button type="button" onClick={addSkill} disabled={!skill.skillName}>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Role</label>
+            <select
+              value={form.userRole}
+              onChange={(e) => setForm({ ...form, userRole: e.target.value })}
+              disabled={!isEditing}
+              className="input"
+            >
+              <option>Student</option>
+              <option>Owner</option>
+              <option>Both</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Department</label>
+            <input
+              type="text"
+              value={form.department}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+              disabled={!isEditing}
+              className="input"
+              placeholder="e.g., Computer Science"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Year of Study</label>
+            <input
+              type="number"
+              min="1"
+              max="10"
+              value={form.yearOfStudy}
+              onChange={(e) => setForm({ ...form, yearOfStudy: e.target.value })}
+              disabled={!isEditing}
+              className="input"
+            />
+          </div>
+
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">Experience Level</label>
+            <select
+              value={form.experienceLevel}
+              onChange={(e) => setForm({ ...form, experienceLevel: e.target.value })}
+              disabled={!isEditing}
+              className="input"
+            >
+              <option>Beginner</option>
+              <option>Intermediate</option>
+              <option>Advanced</option>
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-2">Bio</label>
+          <textarea
+            value={form.bio}
+            onChange={(e) => setForm({ ...form, bio: e.target.value })}
+            disabled={!isEditing}
+            className="input min-h-[120px]"
+            placeholder="Tell us about yourself, your interests, and what you're looking for in a team..."
+          />
+        </div>
+
+        {isEditing && (
+          <div className="flex gap-3 pt-2 border-t border-neutral-100">
+            <button onClick={saveProfile} disabled={busyAction} className="btn-primary">
+              Save Changes
+            </button>
+            <button onClick={() => setIsEditing(false)} className="btn-secondary">Cancel</button>
+          </div>
+        )}
+      </div>
+
+      <VideoIntro />
+
+      <div className="card p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-neutral-800">Skills & Expertise</h2>
+            <p className="text-sm text-neutral-500">Add your technical and professional skills</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-3 items-end">
+          <SearchableSelect
+            options={skills.map(s => ({ id: s.id, name: s.skillName, category: s.category || s.skillCategory }))}
+            value={skill.skillName}
+            onSelect={(opt) => setSkill({ ...skill, skillId: opt.id, skillName: opt.name })}
+            placeholder="Search or add skill..."
+          />
+          
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-medium text-neutral-700 mb-2">Proficiency (1-5)</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={skill.level}
+              onChange={(e) => setSkill({ ...skill, level: parseInt(e.target.value) })}
+              className="input w-28"
+            />
+          </div>
+
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-medium text-neutral-700 mb-2">Experience (years)</label>
+            <input
+              type="number"
+              min="0"
+              max="50"
+              value={skill.years}
+              onChange={(e) => setSkill({ ...skill, years: parseInt(e.target.value) })}
+              className="input w-28"
+            />
+          </div>
+
+          <button onClick={addSkill} disabled={busyAction} className="btn-primary flex-shrink-0">
             Add Skill
           </button>
         </div>
-        {msg.text && msg.error && <p className="error" style={{ marginTop: '0.5rem', fontSize: '0.875rem' }}>{msg.text}</p>}
-        {mySkills.length > 0 ? (
-          <>
-            <p className="muted" style={{ fontSize: '0.875rem', marginTop: '1rem', marginBottom: '0.5rem' }}>
-              Your skills ({mySkills.length}):
-            </p>
-            <ul className="chips">
-              {mySkills.map((s) => (
-                <li key={s.id}>
-                  {s.skillName} - L{s.proficiencyLevel} ({s.yearsOfExperience}y)
-                  <button className="x" onClick={() => run(() => deleteDoc(doc(db, "users", uid, "skills", s.id)), "")} title="Remove this skill">×</button>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p className="muted" style={{ marginTop: '1rem', textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-            No skills added yet. Add your first skill above to improve project matching!
-          </p>
-        )}
-      </section>
 
-      <section className="card">
-        <h2>Preferred Roles</h2>
-        <p className="muted" style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-          Select the roles you're interested in for team projects
-        </p>
-        <p className="muted" style={{ marginBottom: '1rem', fontSize: '0.8125rem', fontStyle: 'italic' }}>
-          <strong>Rank:</strong> 1 = most preferred, higher numbers = less preferred
-        </p>
-        <div className="row">
+        {mySkills.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {mySkills.map(s => (
+              <div key={s.id} className="inline-flex items-center gap-2 px-3 py-2 bg-primary-50 text-primary-700 rounded-lg border border-primary-100">
+                <span className="font-medium text-sm">{s.skillName}</span>
+                <span className="text-xs text-primary-600 bg-primary-100 px-2 py-0.5 rounded">L{s.proficiencyLevel}</span>
+                <span className="text-xs text-primary-600">{s.yearsOfExperience}y</span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${s.skillName} skill`}
+                  disabled={busyAction}
+                  onClick={() => removeSkill(s.id)}
+                  className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-primary-700 hover:bg-primary-100 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-neutral-50 rounded-lg border border-neutral-100">
+            <svg className="w-12 h-12 text-neutral-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <p className="text-neutral-500 text-sm">No skills added yet. Add your first skill above.</p>
+          </div>
+        )}
+      </div>
+
+      <div className="card p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-sage-100 flex items-center justify-center">
+            <svg className="w-5 h-5 text-sage-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-neutral-800">Preferred Roles</h2>
+            <p className="text-sm text-neutral-500">Select roles you'd like to take on in teams</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-3 items-end">
           <SearchableSelect
-            options={roleOptions}
+            options={roles.map(r => ({ id: r.id, name: r.roleName, category: r.category }))}
             value={role.roleName}
-            onSelect={(option) => setRole({ ...role, roleId: option.id, roleName: option.name })}
-            placeholder="Search roles... (e.g., Frontend Developer)"
+            onSelect={(opt) => setRole({ ...role, roleId: opt.id, roleName: opt.name })}
+            placeholder="Search or add role..."
           />
-          <label className="inline">Rank
-            <select value={role.rank} onChange={(e) => setRole({ ...role, rank: e.target.value })} title="1 = most preferred">
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => <option key={n}>{n}</option>)}
-            </select>
-          </label>
-          <button type="button" onClick={addRole} disabled={!role.roleName}>
+          
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-medium text-neutral-700 mb-2">Preference (1-5)</label>
+            <input
+              type="number"
+              min="1"
+              max="5"
+              value={role.rank}
+              onChange={(e) => setRole({ ...role, rank: parseInt(e.target.value) })}
+              className="input w-28"
+            />
+          </div>
+
+          <button onClick={addRole} disabled={busyAction} className="btn-accent flex-shrink-0">
             Add Role
           </button>
         </div>
-        {myRoles.length > 0 ? (
-          <>
-            <p className="muted" style={{ fontSize: '0.875rem', marginTop: '1rem', marginBottom: '0.5rem' }}>
-              Your preferred roles ({myRoles.length}), ranked:
-            </p>
-            <ul className="chips">
-              {[...myRoles].sort((a, b) => a.preferenceRank - b.preferenceRank).map((r) => (
-                <li key={r.id}>
-                  #{r.preferenceRank} {r.roleName}
-                  <button className="x" onClick={() => run(() => deleteDoc(doc(db, "users", uid, "preferredRoles", r.id)), "")} title="Remove this role">×</button>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p className="muted" style={{ marginTop: '1rem', textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-            No roles added yet. Add your preferred roles to find suitable projects!
-          </p>
-        )}
-      </section>
 
-      <section className="card">
-        <h2>Weekly Availability</h2>
-        <p className="muted" style={{ marginBottom: '0.5rem', fontSize: '0.875rem' }}>
-          Add your available time slots for team meetings and collaboration
-        </p>
-        <p className="muted" style={{ marginBottom: '1rem', fontSize: '0.8125rem', fontStyle: 'italic' }}>
-          Teams can use this to schedule meetings at times that work for everyone
-        </p>
-        <div className="row">
-          <select value={slot.dayOfWeek} onChange={(e) => setSlot({ ...slot, dayOfWeek: e.target.value })} style={{ minWidth: '120px' }}>{DAYS.map((d) => <option key={d}>{d}</option>)}</select>
-          <input type="time" value={slot.startTime} onChange={(e) => setSlot({ ...slot, startTime: e.target.value })} title="Start time" />
-          <input type="time" value={slot.endTime} onChange={(e) => setSlot({ ...slot, endTime: e.target.value })} title="End time" />
-          <button type="button" onClick={addSlot} disabled={slot.endTime <= slot.startTime}>Add Slot</button>
-        </div>
-        {slots.length > 0 ? (
-          <>
-            <p className="muted" style={{ fontSize: '0.875rem', marginTop: '1rem', marginBottom: '0.5rem' }}>
-              Your availability ({slots.length} time slots):
-            </p>
-            <ul className="chips">
-              {slots.map((s) => (
-                <li key={s.id}>{s.dayOfWeek} {s.startTime}-{s.endTime}
-                  <button className="x" onClick={() => run(() => deleteDoc(doc(db, "users", uid, "availability", s.id)), "")} title="Remove this time slot">×</button>
-                </li>
-              ))}
-            </ul>
-          </>
+        {myRoles.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {myRoles.map(r => (
+              <div key={r.id} className="inline-flex items-center gap-2 px-3 py-2 bg-sage-50 text-sage-800 rounded-lg border border-sage-100">
+                <span className="font-medium text-sm">{r.roleName}</span>
+                <span className="text-xs text-sage-700 bg-sage-100 px-2 py-0.5 rounded">#{r.preferenceRank}</span>
+                <button
+                  type="button"
+                  aria-label={`Remove ${r.roleName} role`}
+                  disabled={busyAction}
+                  onClick={() => removeRole(r.id)}
+                  className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-sage-800 hover:bg-sage-100 transition-colors"
+                >
+                  Remove
+                </button>
+              </div>
+            ))}
+          </div>
         ) : (
-          <p className="muted" style={{ marginTop: '1rem', textAlign: 'center', padding: '1rem', background: 'var(--bg-secondary)', borderRadius: '8px' }}>
-            No availability added yet. Add your available time slots to help teams coordinate!
-          </p>
+          <div className="text-center py-8 bg-neutral-50 rounded-lg border border-neutral-100">
+            <svg className="w-12 h-12 text-neutral-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+            </svg>
+            <p className="text-neutral-500 text-sm">No roles added yet. Add your preferred roles above.</p>
+          </div>
         )}
-      </section>
+      </div>
+
+      <AdvancedScheduler />
+
+      <div className="card p-6 space-y-5">
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-lg bg-primary-100 flex items-center justify-center">
+            <svg className="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold text-neutral-800">Quick Availability</h2>
+            <p className="text-sm text-neutral-500">Add your available time slots throughout the week</p>
+          </div>
+        </div>
+        
+        <div className="flex flex-wrap gap-3 items-end">
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-medium text-neutral-700 mb-2">Day</label>
+            <select
+              value={slot.dayOfWeek}
+              onChange={(e) => setSlot({ ...slot, dayOfWeek: e.target.value })}
+              className="input w-32"
+            >
+              {DAYS.map(d => <option key={d}>{d}</option>)}
+            </select>
+          </div>
+
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-medium text-neutral-700 mb-2">Start Time</label>
+            <input
+              type="time"
+              value={slot.startTime}
+              onChange={(e) => setSlot({ ...slot, startTime: e.target.value })}
+              className="input w-36"
+            />
+          </div>
+
+          <div className="flex-shrink-0">
+            <label className="block text-xs font-medium text-neutral-700 mb-2">End Time</label>
+            <input
+              type="time"
+              value={slot.endTime}
+              onChange={(e) => setSlot({ ...slot, endTime: e.target.value })}
+              className="input w-36"
+            />
+          </div>
+
+          <button onClick={addSlot} disabled={busyAction} className="btn-primary flex-shrink-0">
+            Add Slot
+          </button>
+        </div>
+
+        {slots.length > 0 ? (
+          <div className="space-y-2">
+            {DAYS.map(day => {
+              const daySlots = slots.filter(s => s.dayOfWeek === day);
+              if (!daySlots.length) return null;
+              
+              return (
+                <div key={day} className="flex items-start gap-3 p-3 bg-neutral-50 rounded-lg border border-neutral-100">
+                  <span className="font-semibold text-neutral-700 w-12 flex-shrink-0 pt-0.5">{day}</span>
+                  <div className="flex-1 flex flex-wrap gap-2">
+                    {daySlots.map(s => (
+                      <div key={s.id} className="inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-neutral-200 rounded-lg text-sm">
+                        <svg className="w-4 h-4 text-neutral-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span className="text-neutral-700">{s.startTime} - {s.endTime}</span>
+                        <button
+                          type="button"
+                          aria-label={`Remove ${day} ${s.startTime} to ${s.endTime} availability`}
+                          disabled={busyAction}
+                          onClick={() => removeSlot(s.id)}
+                          className="rounded px-1.5 py-0.5 text-[10px] font-bold text-neutral-500 hover:bg-error-50 hover:text-error-700 transition-colors"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="text-center py-8 bg-neutral-50 rounded-lg border border-neutral-100">
+            <svg className="w-12 h-12 text-neutral-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            <p className="text-neutral-500 text-sm">No availability slots added yet. Add your first time slot above.</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

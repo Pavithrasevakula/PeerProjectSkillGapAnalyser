@@ -147,7 +147,14 @@ service cloud.firestore {
       }
 
       // Everything below is derived data written by Cloud Functions (Admin SDK bypasses rules).
-      match /teamMembers/{profileId}     { allow read: if signedIn(); allow write: if false; }
+      match /teamMembers/{profileId} {
+        allow read: if signedIn() && (
+          profileId == request.auth.uid ||
+          projectOwner(projectId) ||
+          exists(/databases/$(database)/documents/projects/$(projectId)/teamMembers/$(request.auth.uid))
+        );
+        allow write: if false;
+      }
       match /team/{docId}                { allow read: if signedIn(); allow write: if false; }
       match /tbiHistory/{historyId}      { allow read: if signedIn(); allow write: if false; }
       match /recommendations/{profileId} { allow read: if projectOwner(projectId); allow write: if false; }
@@ -158,10 +165,111 @@ service cloud.firestore {
       allow read: if signedIn() && resource.data.profileId == request.auth.uid;
     }
     match /{path=**}/teamMembers/{memberId} {
-      allow read: if signedIn();
+      allow read: if signedIn() && memberId == request.auth.uid;
     }
 
-    /* -------------------------------- analytics -------------------------------- */
+    /* --------------------------- team invitations --------------------------- */
+    match /teamInvitations/{invitationId} {
+      allow read: if signedIn() && (
+        resource.data.inviteeId == request.auth.uid ||
+        resource.data.invitedBy == request.auth.uid
+      );
+      allow create: if signedIn()
+        && request.resource.data.invitedBy == request.auth.uid
+        && projectOwner(request.resource.data.projectId)
+        && request.resource.data.keys().hasAll(['projectId', 'inviteeId', 'invitedBy', 'proposedRole', 'status', 'createdAt'])
+        && request.resource.data.projectId is string
+        && request.resource.data.inviteeId is string
+        && request.resource.data.inviteeId != request.auth.uid
+        && request.resource.data.proposedRole is string
+        && (!('message' in request.resource.data) || (request.resource.data.message is string && request.resource.data.message.size() <= 1000))
+        && request.resource.data.status == 'pending'
+        && request.resource.data.createdAt == request.time;
+      allow update: if signedIn()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && (
+          (resource.data.inviteeId == request.auth.uid && request.resource.data.status in ['accepted', 'declined']) ||
+          (resource.data.invitedBy == request.auth.uid && request.resource.data.status == 'cancelled')
+        );
+      allow delete: if signedIn() && resource.data.invitedBy == request.auth.uid;
+    }
+
+
     match /analytics/{docId} { allow read: if signedIn(); allow write: if false; }
+
+    /* ----------------------------- gamification ----------------------------- */
+    match /users/{userId}/achievements/{achievementId} {
+      allow read: if signedIn() && (isOwner(userId) || true); // Public viewing
+      allow write: if false; // Written by Cloud Functions only
+    }
+    
+    match /leaderboard/{entryId} {
+      allow read: if signedIn();
+      allow write: if false; // Written by Cloud Functions only
+    }
+
+    /* -------------------------------- chat system -------------------------------- */
+    // Team channels (per project)
+    match /projects/{projectId}/channels/{channelId} {
+      allow read: if signedIn() && (
+        projectOwner(projectId) ||
+        exists(/databases/$(database)/documents/projects/$(projectId)/teamMembers/$(request.auth.uid))
+      );
+      allow create: if signedIn() && (
+        projectOwner(projectId) ||
+        exists(/databases/$(database)/documents/projects/$(projectId)/teamMembers/$(request.auth.uid))
+      ) && request.resource.data.keys().hasAll(['channelName', 'createdAt', 'createdBy'])
+        && request.resource.data.channelName is string && request.resource.data.channelName.size() > 0;
+      allow update, delete: if projectOwner(projectId);
+
+      // Messages in a channel
+      match /messages/{messageId} {
+        allow read: if signedIn() && (
+          projectOwner(projectId) ||
+          exists(/databases/$(database)/documents/projects/$(projectId)/teamMembers/$(request.auth.uid))
+        );
+        allow create: if signedIn() && (
+          projectOwner(projectId) ||
+          exists(/databases/$(database)/documents/projects/$(projectId)/teamMembers/$(request.auth.uid))
+        ) && request.resource.data.keys().hasAll(['senderId', 'senderName', 'text', 'timestamp'])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+          && request.resource.data.timestamp == request.time;
+        allow update: if signedIn() && resource.data.senderId == request.auth.uid
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['text', 'edited', 'editedAt']);
+        allow delete: if signedIn() && resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // Direct messages (1-on-1 conversations)
+    match /directMessages/{conversationId} {
+      allow read: if signedIn() && (
+        conversationId.split('_')[0] == request.auth.uid ||
+        conversationId.split('_')[1] == request.auth.uid
+      );
+      allow create: if signedIn() && (
+        conversationId.split('_')[0] == request.auth.uid ||
+        conversationId.split('_')[1] == request.auth.uid
+      ) && request.resource.data.keys().hasAll(['participants', 'lastMessageAt'])
+        && request.resource.data.participants.size() == 2
+        && request.auth.uid in request.resource.data.participants;
+      allow update: if signedIn() && request.auth.uid in resource.data.participants;
+
+      match /messages/{messageId} {
+        allow read: if signedIn() && request.auth.uid in get(/databases/$(database)/documents/directMessages/$(conversationId)).data.participants;
+        allow create: if signedIn() && request.auth.uid in get(/databases/$(database)/documents/directMessages/$(conversationId)).data.participants
+          && request.resource.data.keys().hasAll(['senderId', 'senderName', 'text', 'timestamp'])
+          && request.resource.data.senderId == request.auth.uid
+          && request.resource.data.text is string && request.resource.data.text.size() > 0 && request.resource.data.text.size() <= 2000
+          && request.resource.data.timestamp == request.time;
+        allow update: if signedIn() && resource.data.senderId == request.auth.uid;
+        allow delete: if signedIn() && resource.data.senderId == request.auth.uid;
+      }
+    }
+
+    // Typing indicators
+    match /typingIndicators/{indicatorId} {
+      allow read, write: if signedIn();
+    }
   }
 }
