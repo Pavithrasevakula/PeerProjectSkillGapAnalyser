@@ -352,8 +352,6 @@ The unit tests cover availability helpers, skill coverage, complementarity scori
 - [`SETUP.md`](SETUP.md)
 - [`DEMO_CREDENTIALS.md`](DEMO_CREDENTIALS.md)
 - [`FIREBASE_STORAGE_SETUP.md`](FIREBASE_STORAGE_SETUP.md)
-- [`FINAL_AUDIT_REPORT_2026-10-17.md`](FINAL_AUDIT_REPORT_2026-10-17.md)
-- [`FINAL_COMPREHENSIVE_TEST_REPORT.md`](FINAL_COMPREHENSIVE_TEST_REPORT.md)
 - [`SECURITY_ALERT.md`](SECURITY_ALERT.md)
 - [`DATABASE_REPORT_COMPLETE.docx`](DATABASE_REPORT_COMPLETE.docx)
 - [Firebase Documentation](https://firebase.google.com/docs)

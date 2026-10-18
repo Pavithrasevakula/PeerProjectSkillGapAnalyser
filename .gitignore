@@ -58,9 +58,10 @@ desktop.ini
 ~$*.docx
 ~$*.xlsx
 
-# Personal notes (optional - uncomment if needed)
-# NOTES.md
-# TODO.md
+# Markdown notes, reports and drafts stay local. Files already tracked (the docs listed in
+# README.md) keep being tracked; only new .md files are ignored.
+*.md
+!README.md
 
 # Test output
 frontend/test-results/
