@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { auth, db } from '../firebase';
 import { collection, doc, getDoc, getDocs, addDoc, updateDoc, query, where, serverTimestamp } from 'firebase/firestore';
 import { applyToProject } from '../api';
@@ -33,15 +33,19 @@ export default function TeamLab() {
     evidenceLinks: ''
   });
 
-  useEffect(() => {
-    loadLabData();
+  const showMessage = useCallback((msg, isError = false) => {
+    setMessage(msg);
+    setMessageError(isError);
+    setTimeout(() => {
+      setMessage('');
+      setMessageError(false);
+    }, 4200);
   }, []);
 
-  const loadLabData = async () => {
+  const loadLabData = useCallback(async () => {
     try {
       const user = auth.currentUser;
       if (!user) {
-        console.log('No user logged in');
         return;
       }
 
@@ -120,16 +124,12 @@ export default function TeamLab() {
       console.error('Error loading lab data:', error);
       showMessage(`Could not load data: ${error.message}`, true);
     }
-  };
+  }, [showMessage]);
 
-  const showMessage = (msg, isError = false) => {
-    setMessage(msg);
-    setMessageError(isError);
-    setTimeout(() => {
-      setMessage('');
-      setMessageError(false);
-    }, 4200);
-  };
+  useEffect(() => {
+    // Start the initial fetch asynchronously; its results are applied via setState when they arrive.
+    Promise.resolve().then(loadLabData);
+  }, [loadLabData]);
 
   const loadSimulationUser = async (userId) => {
     const userDoc = await getDoc(doc(db, 'users', userId));
@@ -159,7 +159,6 @@ export default function TeamLab() {
     setSimulationResults(null);
 
     try {
-      const user = auth.currentUser;
       const projectDoc = await getDoc(doc(db, 'projects', selectedProject));
       const project = { id: projectDoc.id, ...projectDoc.data() };
 
@@ -182,7 +181,7 @@ export default function TeamLab() {
       const candidates = (await Promise.all(candidateDocs.map((candidateDoc) => loadSimulationUser(candidateDoc.id)))).filter(Boolean);
 
       // Run simulation
-      const scenarios = runTeamSimulation(project, teamMembers, candidates, user.uid);
+      const scenarios = runTeamSimulation(project, teamMembers, candidates);
       setSimulationResults({ project, scenarios });
       showMessage('Team scenarios generated successfully.');
     } catch (error) {
@@ -193,7 +192,7 @@ export default function TeamLab() {
     }
   };
 
-  const runTeamSimulation = (project, teamMembers, candidates, currentUserId) => {
+  const runTeamSimulation = (project, teamMembers, candidates) => {
     const requiredSkills = project.requiredSkills || [];
     const requiredRoles = project.requiredRoles || [];
     const targetTeamSize = project.teamSizeRequired || 4;
@@ -402,7 +401,7 @@ export default function TeamLab() {
       <div className="panel-header">
         <div>
           <div className="section-kicker normal-case">TeamSync Plus</div>
-          <h2>Team Lab</h2>
+          <h1 className="lab-page-title">Team Lab</h1>
           <p className="lab-subtitle">Plan stronger teams, support student growth, and keep projects moving.</p>
         </div>
       </div>

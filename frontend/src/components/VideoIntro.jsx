@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { getStorage, ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -9,15 +9,11 @@ export default function VideoIntro() {
   const [uploading, setUploading] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [videoUrl, setVideoUrl] = useState(account?.videoIntroUrl || null);
+  // Local override while uploading/deleting; otherwise follow the live account document.
+  const [localVideoUrl, setVideoUrl] = useState(undefined);
+  const videoUrl = localVideoUrl !== undefined ? localVideoUrl : (account?.videoIntroUrl || null);
   const [error, setError] = useState(null);
-  const [playing, setPlaying] = useState(false);
   const fileInputRef = useRef(null);
-  const videoRef = useRef(null);
-
-  useEffect(() => {
-    setVideoUrl(account?.videoIntroUrl || null);
-  }, [account?.videoIntroUrl]);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -81,15 +77,14 @@ export default function VideoIntro() {
     
     try {
       const storage = getStorage();
-      const videoRef = ref(storage, videoUrl);
-      await deleteObject(videoRef);
+      await deleteObject(ref(storage, videoUrl));
       
       await updateDoc(doc(db, 'users', user.uid), {
         videoIntroUrl: null
       });
       
       setVideoUrl(null);
-    } catch (err) {
+    } catch {
       setError('Failed to delete video. Please try again.');
     } finally {
       setDeleting(false);
@@ -165,12 +160,9 @@ export default function VideoIntro() {
       {videoUrl && !uploading && (
         <div className="space-y-3">
           <video
-            ref={videoRef}
             src={videoUrl}
             controls
             className="w-full rounded-lg border border-neutral-200 shadow-sm bg-black"
-            onPlay={() => setPlaying(true)}
-            onPause={() => setPlaying(false)}
           />
           <div className="flex gap-3">
             <button

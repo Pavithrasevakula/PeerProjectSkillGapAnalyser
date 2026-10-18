@@ -4,6 +4,8 @@ import { auth } from "./firebase";
 import { useAuth } from "./auth.jsx";
 import { ensureDataInitialized } from "./init.js";
 import { useEffect, useRef, useState, lazy, Suspense } from "react";
+import { displayName, firstName } from "./lib/names";
+import { titleForPath } from "./lib/routeTitles";
 
 // Lazy load pages for code splitting
 const Login = lazy(() => import("./pages/Login.jsx"));
@@ -16,6 +18,8 @@ const TeamLab = lazy(() => import("./pages/TeamLab.jsx"));
 
 // Components (keep non-lazy for instant load)
 import PWAInstallPrompt from "./components/PWAInstallPrompt.jsx";
+import PwaStatus from "./components/PwaStatus.jsx";
+const NotFound = lazy(() => import("./pages/NotFound.jsx"));
 
 // Loading fallback component
 function PageLoadingFallback() {
@@ -81,10 +85,13 @@ function Sidebar() {
   const desktopAccountMenuRef = useRef(null);
   const desktopAccountTriggerRef = useRef(null);
 
-  useEffect(() => {
+  // Close both account menus whenever the route changes (state adjusted during render).
+  const [menuPath, setMenuPath] = useState(location.pathname);
+  if (menuPath !== location.pathname) {
+    setMenuPath(location.pathname);
     setAccountOpen(false);
     setDesktopAccountOpen(false);
-  }, [location.pathname]);
+  }
 
   useEffect(() => {
     if (!accountOpen && !desktopAccountOpen) return undefined;
@@ -169,17 +176,8 @@ function Sidebar() {
     },
   ];
   
-  const getDisplayName = () => {
-    if (account?.fullName) {
-      return account.fullName.trim();
-    }
-    return user.email?.split('@')[0] || "User";
-  };
-  
-  const getFirstName = () => {
-    const name = getDisplayName().trim();
-    return name.split(/\s+/)[0] || "User";
-  };
+  const getDisplayName = () => displayName(account, user);
+  const getFirstName = () => firstName(account, user);
 
   const handleSignOut = async () => {
     setAccountOpen(false);
@@ -213,7 +211,7 @@ function Sidebar() {
             <strong className="block font-display text-[19px] tracking-[-0.8px] leading-[1.2]">
               Team<span className="text-pine-mid">Sync</span>
             </strong>
-            <small className="block text-[#8a928d] text-[10px] tracking-[0.35px] mt-1">Project workspace</small>
+            <small className="block text-[#5f6b64] text-xs tracking-[0.35px] mt-1">Project workspace</small>
           </span>
         </Link>
 
@@ -250,7 +248,7 @@ function Sidebar() {
               </svg>
             </span>
             <strong className="block text-xs text-[#34473e]">Better teams, by design.</strong>
-            <p className="text-[11px] leading-[1.6] text-[#7a847d] mt-[5px] mb-0">Fill the gaps. Share the spotlight. Build something useful together.</p>
+            <p className="text-xs leading-[1.6] text-[#5f6b64] mt-[5px] mb-0">Fill the gaps. Share the spotlight. Build something useful together.</p>
           </div>
           
           <div ref={desktopAccountMenuRef} className="relative border-t border-line pt-3">
@@ -260,12 +258,12 @@ function Sidebar() {
               type="button"
               onClick={() => setDesktopAccountOpen((open) => !open)}
               className="desktop-account-trigger flex min-h-[52px] w-full min-w-0 flex-col justify-center rounded-[10px] border-0 bg-transparent px-2.5 py-2 text-left hover:bg-[#f5f7f3]"
-              aria-label={`Account menu for ${getDisplayName()}`}
               aria-expanded={desktopAccountOpen}
               aria-controls="desktop-account-panel"
             >
               <strong className="block max-w-full truncate text-xs text-ink">{getFirstName()}</strong>
-              <small className="mt-0.5 block max-w-full truncate text-[10px] text-[#909892]">{getHeadline()}</small>
+              <small className="mt-0.5 block max-w-full truncate text-xs text-[#5f6b64]">{getHeadline()}</small>
+              <span className="sr-only">Account menu</span>
             </button>
             {desktopAccountOpen && (
               <div
@@ -275,7 +273,7 @@ function Sidebar() {
               >
                 <div className="border-b border-line px-3 py-2.5">
                   <strong className="block truncate text-xs text-ink">{getDisplayName()}</strong>
-                  <small className="mt-0.5 block truncate text-[10px] text-muted">{user.email}</small>
+                  <small className="mt-0.5 block truncate text-xs text-muted">{user.email}</small>
                 </div>
                 <Link
                   to="/profile"
@@ -331,7 +329,7 @@ function Sidebar() {
             >
               <div className="border-b border-line px-3 py-2.5">
                 <strong className="block truncate text-xs text-ink">{getDisplayName()}</strong>
-                <small className="mt-0.5 block truncate text-[10px] text-muted">{user.email}</small>
+                <small className="mt-0.5 block truncate text-xs text-muted">{user.email}</small>
               </div>
               <Link
                 to="/profile"
@@ -433,10 +431,10 @@ function Sidebar() {
               aria-current={isActive ? 'page' : undefined}
             >
               {isActive && <div className="nav-active-indicator" aria-hidden="true"></div>}
-              <div className={`w-[26px] h-[26px] flex items-center justify-center transition-colors ${isActive ? 'text-pine' : 'text-[#8a928d]'}`}>
+              <div className={`w-[26px] h-[26px] flex items-center justify-center transition-colors ${isActive ? 'text-pine' : 'text-[#5f6b64]'}`}>
                 {item.icon}
               </div>
-              <span className={`text-[11px] font-bold transition-colors ${isActive ? 'text-pine' : 'text-[#8a928d]'}`}>
+              <span className={`text-xs font-bold transition-colors ${isActive ? 'text-pine' : 'text-[#5f6b64]'}`}>
                 {item.label}
               </span>
 
@@ -448,18 +446,56 @@ function Sidebar() {
   );
 }
 
+// Updates the document title on navigation and moves focus to the main region
+// (after the first render) so keyboard and screen-reader users land on the new page.
+function RouteAnnouncer({ mainRef }) {
+  const { pathname } = useLocation();
+  const firstRender = useRef(true);
+
+  useEffect(() => {
+    document.title = titleForPath(pathname);
+    if (firstRender.current) {
+      firstRender.current = false;
+      return;
+    }
+    mainRef.current?.focus({ preventScroll: true });
+    window.scrollTo(0, 0);
+  }, [pathname, mainRef]);
+
+  return null;
+}
+
+function LoginRoute() {
+  const { user } = useAuth();
+  if (user) return <Navigate to="/" replace />;
+  return <Login />;
+}
+
 export default function App() {
   const location = useLocation();
   const { user } = useAuth();
+  const mainRef = useRef(null);
   const isLoginPage = location.pathname === '/login';
 
   return (
     <div className="app-shell min-h-screen">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-[100] focus:rounded-lg focus:bg-pine focus:px-4 focus:py-2 focus:text-sm focus:font-bold focus:text-white"
+      >
+        Skip to main content
+      </a>
+      <RouteAnnouncer mainRef={mainRef} />
       {user && !isLoginPage && <Sidebar />}
-      <main className={user && !isLoginPage ? "main-area ml-0 lg:ml-[248px] min-h-screen pb-[72px] lg:pb-0" : "min-h-screen"}>
+      <main
+        id="main-content"
+        ref={mainRef}
+        tabIndex={-1}
+        className={`outline-none ${user && !isLoginPage ? "main-area ml-0 lg:ml-[248px] min-h-screen pb-[72px] lg:pb-0" : "min-h-screen"}`}
+      >
         <Suspense fallback={<PageLoadingFallback />}>
           <Routes>
-            <Route path="/login" element={<Login />} />
+            <Route path="/login" element={<LoginRoute />} />
             <Route path="/" element={<Protected><Projects /></Protected>} />
             <Route path="/profile" element={<Protected><Profile /></Protected>} />
             <Route path="/projects/new" element={<Protected><NewProject /></Protected>} />
@@ -467,10 +503,11 @@ export default function App() {
             <Route path="/projects/:id/edit" element={<Protected><NewProject /></Protected>} />
             <Route path="/dashboard" element={<Protected><Dashboard /></Protected>} />
             <Route path="/team-lab" element={<Protected><TeamLab /></Protected>} />
-            <Route path="*" element={<Navigate to="/" replace />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </main>
+      <PwaStatus />
       {user && !isLoginPage && <PWAInstallPrompt />}
     </div>
   );

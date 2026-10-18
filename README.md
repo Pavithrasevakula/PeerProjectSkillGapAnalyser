@@ -205,7 +205,12 @@ Firestore uses project subcollections such as `applications`, `teamMembers`, `te
    firebase deploy --only storage --project YOUR_PROJECT_ID
    ```
 
-7. **Build and deploy Hosting**
+7. **Deploy Cloud Functions** (before Hosting, so the callable functions the client uses already exist)
+   ```powershell
+   firebase deploy --only functions --project YOUR_PROJECT_ID
+   ```
+
+8. **Build and deploy Hosting**
    ```powershell
    cd frontend
    npm run build
@@ -213,12 +218,7 @@ Firestore uses project subcollections such as `applications`, `teamMembers`, `te
    firebase deploy --only hosting --project YOUR_PROJECT_ID
    ```
 
-8. **Deploy Cloud Functions**
-   ```powershell
-   firebase deploy --only functions --project YOUR_PROJECT_ID
-   ```
-
-For detailed setup guidance, see [`SETUP.md`](SETUP.md) and [`FIREBASE_STORAGE_SETUP.md`](FIREBASE_STORAGE_SETUP.md).
+For the full deployment procedure (pre-flight checks, environment variables, post-deploy checklist, rollback and production caveats), see [`DEPLOYMENT.md`](DEPLOYMENT.md). For first-time Firebase setup, see [`SETUP.md`](SETUP.md) and [`FIREBASE_STORAGE_SETUP.md`](FIREBASE_STORAGE_SETUP.md).
 
 ### Optional data setup
 
@@ -231,6 +231,11 @@ npm run seed
 ```
 
 The service-account key is intentionally ignored and must not be committed.
+
+Two standalone demo-data scripts also exist in `functions/scripts/`. Both read `functions/service-account-key.json`, write to the Firebase project that key belongs to, and have no npm script, so run them deliberately and never against a production project:
+
+- [`createCompleteDemo.js`](functions/scripts/createCompleteDemo.js) creates the 10 demo users listed in [`DEMO_CREDENTIALS.md`](DEMO_CREDENTIALS.md) (Auth accounts, profiles and applications).
+- [`generate500Records.js`](functions/scripts/generate500Records.js) bulk-creates a large set of Auth users and records (the "500+ users" dataset mentioned in the project report and presentation).
 
 ---
 
@@ -301,12 +306,17 @@ TeamSync/
 
 ## Testing
 
-### Frontend production build
+### Frontend checks
 
 ```powershell
 cd frontend
-npm run build
+npm run lint        # ESLint, including React hooks rules
+npm test            # Vitest unit tests (validation, auth messages, config, titles)
+npm run build       # production build into frontend/dist
+npm run test:e2e    # builds, then runs Playwright against dist (uses installed Chrome)
 ```
+
+The Playwright suite covers public pages, password reset, the 404 page, PWA behaviour (manifest, icons, service worker, offline page, update flow), security headers, accessibility (axe-core, WCAG 2.x A/AA rules) and responsive layouts at nine viewport sizes. Signed-in specs run only when `E2E_EMAIL` and `E2E_PASSWORD` are set (use a dedicated test account; the specs never write data). `npm run serve:dist` serves the production build with the headers from `firebase.json` for manual inspection.
 
 ### Backend unit tests
 
@@ -338,6 +348,7 @@ The unit tests cover availability helpers, skill coverage, complementarity scori
 
 ## Related Documentation
 
+- [`DEPLOYMENT.md`](DEPLOYMENT.md)
 - [`SETUP.md`](SETUP.md)
 - [`DEMO_CREDENTIALS.md`](DEMO_CREDENTIALS.md)
 - [`FIREBASE_STORAGE_SETUP.md`](FIREBASE_STORAGE_SETUP.md)

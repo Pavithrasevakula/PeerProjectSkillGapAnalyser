@@ -43,8 +43,7 @@ export function AuthProvider({ children }) {
   ), []);
 
   useEffect(() => {
-    setAccount(null);
-    setAccountReady(!user);
+    // account/accountReady are reset in the auth listener above whenever the user changes.
     if (!user) return undefined;
 
     const accountRef = doc(db, "users", user.uid);

@@ -28,9 +28,9 @@ function formatDate(value) {
 function Stat({ label, value, detail }) {
   return (
     <div className="rounded-[14px] border border-[#e5e9e4] bg-[#fbfcfa] px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-[1px] text-[#89948b]">{label}</div>
+      <div className="text-xs font-bold uppercase tracking-[1px] text-[#5f6b64]">{label}</div>
       <div className="mt-1 font-display text-2xl font-bold tracking-[-0.8px] text-ink">{value}</div>
-      <div className="mt-0.5 text-[10px] text-muted">{detail}</div>
+      <div className="mt-0.5 text-xs text-muted">{detail}</div>
     </div>
   );
 }
@@ -44,14 +44,14 @@ function AchievementCard({ achievement, earned }) {
         </div>
         <div className="min-w-0">
           <h3 className="truncate text-xs font-bold text-ink">{achievement.name}</h3>
-          <p className="mt-1 text-[10px] leading-[1.5] text-muted">{achievement.description}</p>
+          <p className="mt-1 text-xs leading-[1.5] text-muted">{achievement.description}</p>
         </div>
       </div>
-      <div className="mt-3 flex items-center justify-between gap-2 text-[10px]">
+      <div className="mt-3 flex items-center justify-between gap-2 text-xs">
         <span className={earned ? "font-bold text-[#52775e]" : "text-muted"}>
           {earned ? formatDate(achievement.earnedAt) : "Not earned yet"}
         </span>
-        <span className="rounded-full bg-[#f3e8d8] px-2 py-1 font-bold text-[#8b6b45]">{achievement.points} pts</span>
+        <span className="rounded-full bg-[#f3e8d8] px-2 py-1 font-bold text-[#7a5d2e]">{achievement.points} pts</span>
       </div>
     </article>
   );
@@ -96,9 +96,11 @@ export default function GamificationDashboard() {
   const [error, setError] = useState("");
 
   const loadGamification = useCallback(async (isRefresh = false) => {
-    if (isRefresh) setRefreshing(true);
-    else setLoading(true);
-    setError("");
+    // The first load starts in the loading state, so only refreshes need to reset state.
+    if (isRefresh) {
+      setRefreshing(true);
+      setError("");
+    }
 
     let nextAchievements = null;
     let nextLeaderboard = null;
@@ -110,7 +112,7 @@ export default function GamificationDashboard() {
         leaderboard: firestoreData.leaderboard,
         userRank: firestoreData.userRank,
       };
-    } catch (firestoreError) {
+    } catch {
       // Use the callable endpoints when direct reads are unavailable, such as
       // deployments with stricter client rules or a different data boundary.
       const [achievementsResult, leaderboardResult] = await Promise.allSettled([
@@ -136,7 +138,8 @@ export default function GamificationDashboard() {
   }, [user.uid]);
 
   useEffect(() => {
-    loadGamification();
+    // Start the initial fetch asynchronously; results are applied via setState when they arrive.
+    Promise.resolve().then(() => loadGamification());
   }, [loadGamification]);
 
   if (loading) {
@@ -164,9 +167,9 @@ export default function GamificationDashboard() {
     <section className="panel px-[22px] py-[21px]" aria-labelledby="gamification-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="section-kicker text-[9px] tracking-[1.35px]">YOUR PROGRESS</div>
+          <div className="section-kicker text-xs tracking-[1.35px]">YOUR PROGRESS</div>
           <h2 id="gamification-title" className="mt-[5px] font-display text-base tracking-[-0.35px] text-[#2e3b33]">Achievements & impact</h2>
-          <p className="mt-1 text-[11px] leading-[1.6] text-muted">Milestones celebrate meaningful collaboration, not just activity.</p>
+          <p className="mt-1 text-xs leading-[1.6] text-muted">Milestones celebrate meaningful collaboration, not just activity.</p>
         </div>
         <button type="button" onClick={() => loadGamification(true)} disabled={refreshing} className="text-link" aria-label="Refresh achievements and leaderboard">
           {refreshing ? "Refreshing…" : "Refresh"}
@@ -174,7 +177,7 @@ export default function GamificationDashboard() {
       </div>
 
       {error && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-[#f2d4cf] bg-[#fff5f3] px-3 py-2.5 text-[11px] text-danger" role="alert">
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] border border-[#f2d4cf] bg-[#fff5f3] px-3 py-2.5 text-xs text-danger" role="alert">
           <span>{error}</span>
           <button type="button" onClick={() => loadGamification(true)} className="font-bold underline">Try again</button>
         </div>
@@ -193,7 +196,7 @@ export default function GamificationDashboard() {
           ))}
         </div>
       ) : (
-        <div className="mt-5 rounded-[14px] border border-dashed border-[#dce4dc] px-4 py-6 text-center text-[11px] text-muted">
+        <div className="mt-5 rounded-[14px] border border-dashed border-[#dce4dc] px-4 py-6 text-center text-xs text-muted">
           Complete your profile, join a team, or create a project to start earning achievements.
         </div>
       )}
@@ -202,17 +205,17 @@ export default function GamificationDashboard() {
         <div className="mt-5 border-t border-[#f0f2ef] pt-4">
           <div className="mb-3 flex items-center justify-between gap-3">
             <h3 className="text-xs font-bold text-ink">Top collaborators</h3>
-            <span className="text-[10px] text-muted">Updated from team activity</span>
+            <span className="text-xs text-muted">Updated from team activity</span>
           </div>
           <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
             {leaderboard.leaderboard.map((entry) => (
               <div key={entry.userId || entry.rank} className={`rounded-[10px] border px-3 py-2.5 ${entry.userId === userRank?.userId ? "border-[#b8d3be] bg-[#f1f7f1]" : "border-line bg-white"}`}>
                 <div className="flex items-center justify-between gap-2">
-                  <span className="text-[10px] font-bold text-muted">#{entry.rank}</span>
-                  <span className="text-[10px] font-bold text-[#8b6b45]">{entry.totalPoints || 0} pts</span>
+                  <span className="text-xs font-bold text-muted">#{entry.rank}</span>
+                  <span className="text-xs font-bold text-[#7a5d2e]">{entry.totalPoints || 0} pts</span>
                 </div>
-                <div className="mt-1 truncate text-[11px] font-bold text-ink">{entry.userName || "TeamSync member"}</div>
-                <div className="mt-0.5 text-[9px] text-muted">{entry.achievementCount || 0} achievements</div>
+                <div className="mt-1 truncate text-xs font-bold text-ink">{entry.userName || "TeamSync member"}</div>
+                <div className="mt-0.5 text-xs text-muted">{entry.achievementCount || 0} achievements</div>
               </div>
             ))}
           </div>

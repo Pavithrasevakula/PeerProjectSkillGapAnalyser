@@ -162,7 +162,6 @@ export async function ensureDataInitialized() {
     }
     if (initializedForUserId === user.uid) return;
     
-    console.log(`User authenticated: ${user.email} (UID: ${user.uid})`);
     
     // Get user's account info to use their name for one project
     const accountDoc = await getDoc(doc(db, "users", user.uid));
@@ -172,7 +171,6 @@ export async function ensureDataInitialized() {
     const skillsSnapshot = await getDocs(collection(db, "skills"));
     const projectsSnapshot = await getDocs(collection(db, "projects"));
     
-    console.log(`Current state: ${skillsSnapshot.size} skills, ${projectsSnapshot.size} projects`);
     
     // Early return if already fully initialized
     const hasNewProjects = projectsSnapshot.size > 0 && projectsSnapshot.docs.some(doc => doc.data().ownerName);
@@ -181,73 +179,57 @@ export async function ensureDataInitialized() {
       return;
     }
     
-    console.log("Starting initialization process...");
     
     // Add skills only if needed
     if (skillsSnapshot.size < SKILLS_DATA.length) {
-      console.log(`Adding skills (current: ${skillsSnapshot.size}, target: ${SKILLS_DATA.length})...`);
       try {
         const skillPromises = SKILLS_DATA.map(([skillName, skillCategory]) => {
           const id = slug("sk", skillName);
           return setDoc(doc(db, "skills", id), { skillName, skillCategory }, { merge: true });
         });
         await Promise.all(skillPromises);
-        console.log(`Skills ready`);
       } catch (err) {
         console.error(`Skills creation error:`, err.message);
         throw err;
       }
-    } else {
-      console.log(`Skills already complete (${skillsSnapshot.size}/${SKILLS_DATA.length})`);
     }
     
     // Add roles only if needed
     const rolesSnapshot = await getDocs(collection(db, "roles"));
     if (rolesSnapshot.size < ROLES_DATA.length) {
-      console.log(`Adding roles (current: ${rolesSnapshot.size}, target: ${ROLES_DATA.length})...`);
       try {
         const rolePromises = ROLES_DATA.map(roleName => {
           const id = slug("r", roleName);
           return setDoc(doc(db, "roles", id), { roleName }, { merge: true });
         });
         await Promise.all(rolePromises);
-        console.log(`Roles ready`);
       } catch (err) {
         console.error(`Roles creation error:`, err.message);
         throw err;
       }
-    } else {
-      console.log(`Roles already complete (${rolesSnapshot.size}/${ROLES_DATA.length})`);
     }
     
     // Create demo projects if needed (or if old projects don't have ownerName)
     const needsProjects = projectsSnapshot.size < 6 || !projectsSnapshot.docs.some(doc => doc.data().ownerName);
     if (needsProjects) {
-      console.log("Creating demo projects...");
       
       // Delete old projects without ownerName if any exist
       if (projectsSnapshot.size > 0 && !projectsSnapshot.docs.some(doc => doc.data().ownerName)) {
-        console.log("   Removing old demo projects...");
         try {
           for (const docSnapshot of projectsSnapshot.docs) {
             if (docSnapshot.data().ownerUserId === user.uid) {
               await deleteDoc(doc(db, "projects", docSnapshot.id));
             }
           }
-          console.log("   Old projects removed");
         } catch (err) {
           console.error("   Could not remove old projects:", err.message);
           // Continue anyway
         }
       }
       
-      console.log("   Creating demo projects with different owner names...");
-      console.log(`   All projects owned by: ${user.email} (for permissions)`);
-      console.log(`   Display names: Arjun, Priya, Karthik, Sneha, Vikram + Your Project`);
       
       for (let i = 0; i < DEMO_PROJECTS.length; i++) {
         const project = DEMO_PROJECTS[i];
-        console.log(`  [${i+1}/${DEMO_PROJECTS.length}] Creating: ${project.title}`);
         
         const deadline = new Date();
         deadline.setDate(deadline.getDate() + 60); // 60 days from now
@@ -281,13 +263,9 @@ export async function ensureDataInitialized() {
           createdAt: serverTimestamp()
         };
         
-        console.log(`     Display owner: ${project.ownerName}`);
-        console.log(`     Actual owner: ${user.email} (for permissions)`);
-        console.log(`     Team size: ${projectData.teamSizeRequired}`);
         
         try {
-          const docRef = await addDoc(collection(db, "projects"), projectData);
-          console.log(`  Created with ID: ${docRef.id}`);
+          await addDoc(collection(db, "projects"), projectData);
         } catch (err) {
           console.error(`  Failed to create ${project.title}`);
           console.error(`     Error code: ${err.code}`);
@@ -297,17 +275,15 @@ export async function ensureDataInitialized() {
           }
         }
       }
-      console.log(`Finished creating demo projects`);
       
       // Create one project with user's actual name (so they can manage it)
       if (account?.fullName) {
-        console.log(`   Creating your personal project...`);
         
         const deadline = new Date();
         deadline.setDate(deadline.getDate() + 90);
         
         try {
-          const docRef = await addDoc(collection(db, "projects"), {
+          await addDoc(collection(db, "projects"), {
             title: "My First Project",
             description: "This is your personal project that you can edit and manage. Feel free to customize it!",
             domainArea: "General",
@@ -328,7 +304,6 @@ export async function ensureDataInitialized() {
             status: "Open",
             createdAt: serverTimestamp()
           });
-          console.log(`  Created your project with ID: ${docRef.id}`);
         } catch (err) {
           console.error(`  Failed to create your project:`, err.message);
         }
@@ -336,16 +311,6 @@ export async function ensureDataInitialized() {
     }
     
     initializedForUserId = user.uid;
-    console.log(`\nInitialization complete!`);
-    const finalSkillsSnapshot = await getDocs(collection(db, "skills"));
-    const finalProjectsSnapshot = await getDocs(collection(db, "projects"));
-    console.log(`   Final state:`);
-    console.log(`      - Skills: ${finalSkillsSnapshot.size}/${SKILLS_DATA.length}`);
-    console.log(`      - Projects: ${finalProjectsSnapshot.size}/6`);
-    console.log(`\nNext step: Create demo users with Firebase Auth`);
-    console.log(`   Run: cd functions && node scripts/createCompleteDemo.js`);
-    console.log(`\n`);
-    
   } catch (error) {
     console.error("Initialization failed:", error);
     console.error("Error details:", error.message);

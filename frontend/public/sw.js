@@ -1,177 +1,121 @@
-// TeamSync Service Worker
-const CACHE_NAME = 'teamsync-v2';
+// TeamSync service worker.
+//
+// Strategy
+//  - Navigations: network-first, falling back to /offline.html when the network is unavailable.
+//  - Hashed build assets (/assets/*): cache-first (file names change whenever content changes).
+//  - Other same-origin static files (icons, manifest): stale-while-revalidate.
+//  - Never handled here: non-GET requests, cross-origin requests (Firebase APIs), /api/* and
+//    Firebase Hosting reserved paths (/__/*, used by Auth action links). Live data and
+//    authentication responses are never cached.
+//
+// Updates: a new worker waits until the page asks it to activate (SKIP_WAITING), so users are not
+// reloaded in the middle of editing a form.
+
+const CACHE_VERSION = 'v3';
+const CACHE_NAME = `teamsync-${CACHE_VERSION}`;
 const OFFLINE_URL = '/offline.html';
 
-// Assets to cache immediately
 const PRECACHE_ASSETS = [
-  '/',
-  '/offline.html',
+  OFFLINE_URL,
+  '/offline.css',
+  '/offline.js',
   '/manifest.json',
+  '/favicon.svg',
+  '/icons/icon-192.png',
+  '/icons/icon-512.png',
 ];
 
-// Install event - cache essential assets
 self.addEventListener('install', (event) => {
-  console.log('[Service Worker] Install');
-  event.waitUntil(
-    (async () => {
-      const cache = await caches.open(CACHE_NAME);
-      console.log('[Service Worker] Caching essential assets');
-      await cache.addAll(PRECACHE_ASSETS);
-      // Force the waiting service worker to become the active service worker
-      await self.skipWaiting();
-    })()
-  );
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_ASSETS)));
 });
 
-// Activate event - clean up old caches
 self.addEventListener('activate', (event) => {
-  console.log('[Service Worker] Activate');
   event.waitUntil(
     (async () => {
-      // Enable navigation preload if supported
       if ('navigationPreload' in self.registration) {
         await self.registration.navigationPreload.enable();
       }
-      
-      // Clean up old caches
-      const cacheNames = await caches.keys();
+      const names = await caches.keys();
       await Promise.all(
-        cacheNames
-          .filter((name) => name !== CACHE_NAME)
-          .map((name) => caches.delete(name))
+        names
+          .filter((name) => name.startsWith('teamsync-') && name !== CACHE_NAME)
+          .map((name) => caches.delete(name)),
       );
-      
-      // Tell the active service worker to take control immediately
       await self.clients.claim();
-    })()
+    })(),
   );
 });
 
-// Fetch event - serve from cache, fallback to network
-self.addEventListener('fetch', (event) => {
-  // Skip cross-origin requests
-  if (!event.request.url.startsWith(self.location.origin)) {
-    return;
-  }
-
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return;
-  }
-
-  event.respondWith(
-    (async () => {
-      const isNavigation = event.request.mode === 'navigate';
-      try {
-        // Navigation requests use network-first so deployments are not trapped on stale HTML.
-        if (isNavigation) {
-          const preloadResponse = await event.preloadResponse;
-          const networkResponse = preloadResponse || await fetch(event.request);
-          if (networkResponse?.ok) {
-            const cache = await caches.open(CACHE_NAME);
-            await cache.put(event.request, networkResponse.clone());
-          }
-          return networkResponse;
-        }
-
-        const cachedResponse = await caches.match(event.request);
-        if (cachedResponse) return cachedResponse;
-        const networkResponse = await fetch(event.request);
-        if (networkResponse?.ok) {
-          const cache = await caches.open(CACHE_NAME);
-          await cache.put(event.request, networkResponse.clone());
-        }
-        return networkResponse;
-      } catch (error) {
-        console.log('[Service Worker] Fetch failed; returning offline page', error);
-        if (isNavigation) {
-          const cache = await caches.open(CACHE_NAME);
-          const cachedResponse = await cache.match(OFFLINE_URL);
-          if (cachedResponse) return cachedResponse;
-        }
-        return new Response('Offline - Please check your internet connection', {
-          status: 503,
-          statusText: 'Service Unavailable',
-          headers: new Headers({ 'Content-Type': 'text/plain' }),
-        });
-      }
-    })()
-  );
-});
-
-// Background sync for offline actions
-self.addEventListener('sync', (event) => {
-  console.log('[Service Worker] Background sync', event.tag);
-  
-  if (event.tag === 'sync-data') {
-    event.waitUntil(
-      // Implement your background sync logic here
-      syncData()
-    );
-  }
-});
-
-async function syncData() {
-  // Placeholder for syncing offline data when connection is restored
-  console.log('[Service Worker] Syncing offline data...');
+function shouldHandle(request) {
+  if (request.method !== 'GET') return false;
+  const url = new URL(request.url);
+  if (url.origin !== self.location.origin) return false;
+  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/__/')) return false;
+  // Connectivity probes (offline page) must always reach the network, never the cache.
+  if (url.searchParams.has('sw-bypass')) return false;
+  return true;
 }
 
-// Push notification support
-self.addEventListener('push', (event) => {
-  console.log('[Service Worker] Push received', event);
+async function putIfCacheable(request, response) {
+  if (response && response.ok && response.type === 'basic') {
+    const cache = await caches.open(CACHE_NAME);
+    await cache.put(request, response.clone());
+  }
+}
 
-  const options = {
-    body: event.data ? event.data.text() : 'New notification from TeamSync',
-    icon: '/favicon.svg',
-    badge: '/favicon.svg',
-    vibrate: [200, 100, 200],
-    data: {
-      dateOfArrival: Date.now(),
-      primaryKey: 1,
-    },
-    actions: [
-      {
-        action: 'explore',
-        title: 'View',
-      },
-      {
-        action: 'close',
-        title: 'Close',
-      },
-    ],
-  };
+async function handleNavigation(event) {
+  try {
+    const preloaded = await event.preloadResponse;
+    const response = preloaded || (await fetch(event.request));
+    return response;
+  } catch {
+    const cache = await caches.open(CACHE_NAME);
+    const offline = await cache.match(OFFLINE_URL);
+    return offline || new Response('You are offline.', {
+      status: 503,
+      headers: { 'Content-Type': 'text/plain; charset=utf-8' },
+    });
+  }
+}
 
-  event.waitUntil(
-    self.registration.showNotification('TeamSync', options)
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
+  const response = await fetch(request);
+  await putIfCacheable(request, response);
+  return response;
+}
+
+async function staleWhileRevalidate(request) {
+  const cached = await caches.match(request);
+  const refresh = fetch(request)
+    .then(async (response) => {
+      await putIfCacheable(request, response);
+      return response;
+    })
+    .catch(() => undefined);
+  if (cached) return cached;
+  const response = await refresh;
+  return response || new Response('', { status: 504, statusText: 'Offline' });
+}
+
+self.addEventListener('fetch', (event) => {
+  const { request } = event;
+  if (!shouldHandle(request)) return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(handleNavigation(event));
+    return;
+  }
+
+  const { pathname } = new URL(request.url);
+  event.respondWith(
+    pathname.startsWith('/assets/') ? cacheFirst(request) : staleWhileRevalidate(request),
   );
 });
 
-// Handle notification clicks
-self.addEventListener('notificationclick', (event) => {
-  console.log('[Service Worker] Notification click received', event);
-
-  event.notification.close();
-
-  if (event.action === 'explore') {
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
-});
-
-// Handle messages from clients
 self.addEventListener('message', (event) => {
-  console.log('[Service Worker] Message received', event.data);
-
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
-  }
-
-  if (event.data && event.data.type === 'CACHE_URLS') {
-    event.waitUntil(
-      caches.open(CACHE_NAME).then((cache) => {
-        return cache.addAll(event.data.urls);
-      })
-    );
   }
 });

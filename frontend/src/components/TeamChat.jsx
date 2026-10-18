@@ -10,7 +10,7 @@ function formatMessageTime(value) {
 }
 
 export default function TeamChat({ projectId, canAccess = true }) {
-  const { user, account } = useAuth();
+  const { user } = useAuth();
   const [messages, setMessages] = useState([]);
   const [newMessage, setNewMessage] = useState('');
   const [sending, setSending] = useState(false);

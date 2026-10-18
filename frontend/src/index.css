@@ -1,4 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap');
 @import './styles/team-lab.css';
 
 @tailwind base;
@@ -14,15 +13,15 @@
   --paper: #f7f8f5;
   --white: #fff;
   --ink: #252d2a;
-  --muted: #78817c;
+  --muted: #66706a;
   --line: #e5e9e4;
   --sand: #f3e8d8;
   --blue-wash: #e9f0f2;
   --danger: #a94b45;
   --shadow: 0 10px 28px rgba(25, 48, 38, .055);
   --radius: 18px;
-  --font-body: "DM Sans", sans-serif;
-  --font-display: "Manrope", "DM Sans", sans-serif;
+  --font-body: "DM Sans Variable", "DM Sans", system-ui, sans-serif;
+  --font-display: "Manrope Variable", "Manrope", "DM Sans Variable", system-ui, sans-serif;
 }
 
 * {
@@ -37,7 +36,7 @@ body {
   margin: 0;
   background: #f7f8f5 !important;
   color: #252d2a !important;
-  font-family: "DM Sans", sans-serif !important;
+  font-family: var(--font-body) !important;
   font-size: 14px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -62,6 +61,35 @@ textarea:focus-visible,
 select:focus-visible {
   outline: 3px solid rgba(74, 126, 105, .3);
   outline-offset: 2px;
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 @layer components {
@@ -107,6 +135,52 @@ select:focus-visible {
     background-color: #1d3f37;
   }
 
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .btn-secondary {
+    background-color: white;
+    border-color: #d8e2d8;
+    color: #244c43;
+  }
+
+  .btn-secondary:hover {
+    background-color: #f0f5f1;
+  }
+
+  .btn-accent {
+    background-color: #e0ebe4;
+    border-color: #cfe0d4;
+    color: #1d3f37;
+  }
+
+  .btn-accent:hover {
+    background-color: #cfe0d4;
+  }
+
+  .btn-danger {
+    background-color: #a94b45;
+    border-color: #a94b45;
+    color: white;
+  }
+
+  .btn-danger:hover {
+    background-color: #8c3a35;
+  }
+
+  .btn-ghost {
+    background-color: transparent;
+    border-color: transparent;
+    color: #3d6251;
+  }
+
+  .btn-ghost:hover {
+    background-color: #eef3ee;
+  }
+
   .btn-quiet {
     background-color: transparent;
     border-color: #d8e2d8;
@@ -127,45 +201,13 @@ select:focus-visible {
     background-color: rgba(255, 255, 255, 0.1);
   }
 
-  .btn-small {
-    padding: 0.375rem 0.625rem;
-    min-height: 32px;
-    border-radius: 8px;
-    font-size: 10px;
-    font-weight: 700;
-    border: 1px solid #dce4dc;
-    background-color: white;
-    color: #6c786f;
-  }
-
-  .btn-small.accept {
-    background-color: #e8f1e8;
-    border-color: #dbe9dc;
-    color: #4c7658;
-  }
-
-  .btn-small.reject {
-    color: #a1655e;
-  }
-
   .text-link {
     background-color: transparent;
     border: 0;
     color: #547d66;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 700;
     white-space: nowrap;
-  }
-
-  .icon-button {
-    width: 35px;
-    height: 35px;
-    display: grid;
-    place-items: center;
-    background-color: #f5f7f4;
-    border: 1px solid #e8ece6;
-    border-radius: 10px;
-    color: #718074;
   }
 
   /* Forms */
@@ -179,7 +221,7 @@ select:focus-visible {
     border-radius: 9px;
     background-color: white;
     color: #37453a;
-    font-size: 11px;
+    font-size: 12px;
     outline: 0;
     transition: border-color 150ms;
   }
@@ -195,22 +237,16 @@ select:focus-visible {
     display: flex;
     flex-direction: column;
     gap: 0.375rem;
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
     color: #5e6d62;
     min-width: 0;
   }
 
-  .field-label {
-    font-size: 11px;
-    font-weight: 600;
-    color: #5e6d62;
-  }
-
   .field-help {
     font-weight: 400;
-    color: #9aa39b;
-    font-size: 10px;
+    color: #5f6b64;
+    font-size: 12px;
     line-height: 1.6;
   }
 
@@ -220,7 +256,7 @@ select:focus-visible {
     align-items: center;
     padding: 0.25rem 0.5rem;
     border-radius: 6px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     background-color: #e0ebe4;
     color: #244c43;
@@ -232,15 +268,14 @@ select:focus-visible {
     align-items: center;
     padding: 0.25rem 0.5rem;
     border-radius: 6px;
-    font-size: 10px;
+    font-size: 12px;
     font-weight: 700;
     background-color: #f4f6f3;
     color: #617065;
   }
 
-  .skill-tag,
-  .muted-tag {
-    font-size: 9px;
+  .skill-tag {
+    font-size: 12px;
     background-color: #f4f6f3;
     color: #617065;
     padding: 0.25rem 0.5rem;
@@ -250,25 +285,25 @@ select:focus-visible {
   .status-pill {
     border-radius: 6px;
     padding: 0.25rem 0.375rem;
-    font-size: 9px;
+    font-size: 12px;
     font-weight: 700;
     text-transform: capitalize;
   }
 
   .status-pending {
     background-color: #f8f0df;
-    color: #997849;
+    color: #7a5d2e;
   }
 
   .status-accepted {
     background-color: #e6f1e8;
-    color: #4f7a5c;
+    color: #3c6649;
   }
 
   .status-rejected,
   .status-withdrawn {
     background-color: #f4e9e7;
-    color: #a2645c;
+    color: #8f4e47;
   }
 
   /* Typography */
@@ -298,12 +333,11 @@ select:focus-visible {
 
   .section-kicker,
   .eyebrow,
-  .nav-label,
-  .preview-label {
-    font-size: 10px;
+  .nav-label {
+    font-size: 12px;
     letter-spacing: 1.6px;
     font-weight: 700;
-    color: #929b95;
+    color: #5f6b64;
     text-transform: uppercase;
   }
 
@@ -366,7 +400,7 @@ select:focus-visible {
     justify-content: center;
     text-align: center;
     padding: 2rem;
-    color: #879187;
+    color: #5f6b64;
   }
 
   .empty-state h3 {
@@ -378,7 +412,7 @@ select:focus-visible {
   }
 
   .empty-state p {
-    font-size: 11px;
+    font-size: 12px;
     max-width: 28rem;
     line-height: 1.7;
     margin: 0;
@@ -395,13 +429,6 @@ select:focus-visible {
   }
 
   /* Utilities */
-  .line-clamp-1 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 1;
-  }
-
   .line-clamp-2 {
     overflow: hidden;
     display: -webkit-box;
@@ -409,12 +436,6 @@ select:focus-visible {
     -webkit-line-clamp: 2;
   }
 
-  .line-clamp-3 {
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 3;
-  }
 }
 
 /* Mobile Bottom Navigation */

@@ -121,7 +121,7 @@
 
 .lab-score small {
   display: block;
-  font-size: 9px;
+  font-size: 12px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #64748b;
@@ -150,13 +150,13 @@
 .lab-metrics span {
   display: block;
   color: #64748b;
-  font-size: 10px;
+  font-size: 12px;
   line-height: 1.35;
   margin-top: 3px;
 }
 
 .lab-detail-title {
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.07em;
@@ -173,7 +173,7 @@
 .lab-tag {
   border-radius: 999px;
   padding: 5px 8px;
-  font-size: 10px;
+  font-size: 12px;
   background: #f1f5f9;
   color: #475569;
   font-weight: 600;
@@ -209,7 +209,7 @@
   border-radius: 9px;
   background: #e0ebe4;
   color: #244c43;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 800;
   flex: none;
 }
@@ -226,24 +226,24 @@
 }
 
 .lab-member strong {
-  font-size: 11px;
+  font-size: 12px;
   color: #252d2a;
 }
 
 .lab-member small {
-  font-size: 10px;
+  font-size: 12px;
   color: #64748b;
   margin-top: 2px;
 }
 
 .lab-invite {
   padding: 5px 8px;
-  font-size: 10px;
+  font-size: 12px;
   flex: none;
 }
 
 .lab-you {
-  font-size: 10px;
+  font-size: 12px;
   color: #244c43;
   font-weight: 800;
 }
@@ -254,7 +254,7 @@
   align-items: center;
   gap: 8px;
   margin: 8px 0;
-  font-size: 10px;
+  font-size: 12px;
 }
 
 .lab-progress {
@@ -273,7 +273,7 @@
 
 .lab-coverage-row small {
   color: #64748b;
-  font-size: 9px;
+  font-size: 12px;
 }
 
 .lab-form-grid {
@@ -337,17 +337,6 @@
   margin: 0;
 }
 
-.lab-check {
-  flex-direction: row !important;
-  align-items: center;
-  gap: 10px !important;
-}
-
-.lab-check input {
-  width: 16px;
-  height: 16px;
-}
-
 .lab-list {
   display: grid;
   gap: 10px;
@@ -377,7 +366,7 @@
 }
 
 .lab-list-item small {
-  font-size: 11px;
+  font-size: 12px;
   color: #64748b;
   display: block;
   margin-top: 8px;
@@ -390,7 +379,7 @@
 }
 
 .lab-status {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 800;
   text-transform: capitalize;
   padding: 6px 9px;
@@ -427,12 +416,6 @@
   font-weight: 700;
 }
 
-.lab-divider {
-  border: 0;
-  border-top: 1px solid #e5e9e4;
-  margin: 22px 0;
-}
-
 .lab-footer-note {
   display: flex;
   justify-content: space-between;
@@ -441,7 +424,7 @@
   margin-top: 22px;
   padding-top: 16px;
   border-top: 1px solid #e5e9e4;
-  font-size: 11px;
+  font-size: 12px;
   color: #64748b;
 }
 
@@ -492,4 +475,14 @@
   .lab-metrics {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* The page title is the document's h1 but keeps the compact panel-title look. */
+.team-lab-panel .lab-page-title {
+  font-size: 1rem;
+  line-height: inherit;
+  letter-spacing: -0.35px;
+  font-weight: inherit;
+  margin-bottom: 0;
+  color: #2e3b33;
 }

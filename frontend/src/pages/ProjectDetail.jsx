@@ -44,7 +44,6 @@ export default function ProjectDetail() {
   const [busy, setBusy] = useState("");
   const [msg, setMsg] = useState({ text: "", error: false });
 
-  const recById = useMemo(() => Object.fromEntries(recs.map((r) => [r.id, r])), [recs]);
   const roleName = (rid) => project?.requiredRoles?.find((r) => r.roleId === rid)?.roleName || rid;
   const radarRows = useMemo(() => Object.values(gap?.skills || {}).map((s) => (
     { skill: s.skillName, required: s.requiredLevel, covered: s.coveredLevel })), [gap]);
@@ -144,8 +143,8 @@ export default function ProjectDetail() {
                 project.status === 'Closed' ? 'bg-[#f4f6f3] text-[#617065]' : 'status-pending'
               }`}>{project.status}</span>
             </div>
-            <div className="flex items-center gap-2 text-[#808b82] text-sm mb-4">
-              <div className="owner-dot w-6 h-6 rounded-lg bg-[#edf0eb] grid place-items-center text-[#6d8172] text-[9px] font-extrabold">
+            <div className="flex items-center gap-2 text-[#5f6b64] text-sm mb-4">
+              <div className="owner-dot w-6 h-6 rounded-lg bg-[#edf0eb] grid place-items-center text-[#5f6b64] text-xs font-extrabold">
                 {project.ownerName?.charAt(0).toUpperCase() || 'P'}
               </div>
               <span>Created by <span className="font-medium text-ink">{project.ownerName}</span></span>
@@ -240,8 +239,8 @@ export default function ProjectDetail() {
           </div>
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[250px]">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Select Role</label>
-              <select
+              <label htmlFor="detail-select-role" className="block text-sm font-medium text-neutral-700 mb-2">Select Role</label>
+              <select id="detail-select-role"
                 value={roleId}
                 onChange={(e) => setRoleId(e.target.value)}
                 className="input"

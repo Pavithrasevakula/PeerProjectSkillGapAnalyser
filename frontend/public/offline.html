@@ -1,197 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TeamSync - Offline</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .offline-container {
-            background: white;
-            border-radius: 20px;
-            padding: 60px 40px;
-            max-width: 500px;
-            text-align: center;
-            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-        }
-
-        .offline-icon {
-            width: 120px;
-            height: 120px;
-            margin: 0 auto 30px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 60px;
-        }
-
-        h1 {
-            color: #2d3748;
-            font-size: 32px;
-            margin-bottom: 16px;
-            font-weight: 700;
-        }
-
-        p {
-            color: #718096;
-            font-size: 18px;
-            line-height: 1.6;
-            margin-bottom: 30px;
-        }
-
-        .retry-btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 16px 40px;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: transform 0.2s, box-shadow 0.2s;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        }
-
-        .retry-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .retry-btn:active {
-            transform: translateY(0);
-        }
-
-        .cached-info {
-            margin-top: 40px;
-            padding: 20px;
-            background: #f7fafc;
-            border-radius: 12px;
-            border-left: 4px solid #667eea;
-        }
-
-        .cached-info h3 {
-            color: #2d3748;
-            font-size: 16px;
-            margin-bottom: 8px;
-        }
-
-        .cached-info ul {
-            list-style: none;
-            color: #718096;
-            font-size: 14px;
-        }
-
-        .cached-info li {
-            padding: 4px 0;
-        }
-
-        .cached-info li::before {
-            content: "✓ ";
-            color: #48bb78;
-            font-weight: bold;
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .checking {
-            animation: pulse 2s ease-in-out infinite;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#244c43">
+  <title>Offline - TeamSync</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="stylesheet" href="/offline.css">
 </head>
 <body>
-    <div class="offline-container">
-        <div class="offline-icon">
-            📡
-        </div>
-        <h1>You're Offline</h1>
-        <p>It looks like you've lost your internet connection. Don't worry, some features are still available!</p>
-        
-        <button class="retry-btn" onclick="retryConnection()">
-            <span id="btn-text">Retry Connection</span>
-        </button>
-
-        <div class="cached-info">
-            <h3>Available Offline:</h3>
-            <ul>
-                <li>View your profile</li>
-                <li>Browse cached projects</li>
-                <li>Review your team matches</li>
-                <li>Check saved schedules</li>
-            </ul>
-        </div>
-    </div>
-
-    <script>
-        function retryConnection() {
-            const btn = document.querySelector('.retry-btn');
-            const btnText = document.getElementById('btn-text');
-            
-            btn.classList.add('checking');
-            btnText.textContent = 'Checking...';
-            btn.disabled = true;
-
-            // Check if online
-            if (navigator.onLine) {
-                // Try to fetch a small resource to confirm connectivity
-                fetch('/manifest.json', { method: 'HEAD', cache: 'no-store' })
-                    .then(() => {
-                        btnText.textContent = 'Connected! Redirecting...';
-                        setTimeout(() => {
-                            window.location.href = '/';
-                        }, 500);
-                    })
-                    .catch(() => {
-                        btnText.textContent = 'Still Offline';
-                        btn.classList.remove('checking');
-                        setTimeout(() => {
-                            btnText.textContent = 'Retry Connection';
-                            btn.disabled = false;
-                        }, 2000);
-                    });
-            } else {
-                btnText.textContent = 'Still Offline';
-                btn.classList.remove('checking');
-                setTimeout(() => {
-                    btnText.textContent = 'Retry Connection';
-                    btn.disabled = false;
-                }, 2000);
-            }
-        }
-
-        // Auto-retry when connection is restored
-        window.addEventListener('online', () => {
-            const btn = document.querySelector('.retry-btn');
-            const btnText = document.getElementById('btn-text');
-            btnText.textContent = 'Connection Restored!';
-            setTimeout(() => {
-                window.location.href = '/';
-            }, 1000);
-        });
-
-        // Update UI based on online status
-        window.addEventListener('offline', () => {
-            console.log('Connection lost');
-        });
-    </script>
+  <main>
+    <img class="mark" src="/icons/icon-192.png" alt="" width="64" height="64">
+    <h1>You are offline</h1>
+    <p>TeamSync needs an internet connection to load projects, teams and messages. Reconnect and try again. Nothing you have already saved is lost.</p>
+    <button id="retry" type="button">Try again</button>
+    <div id="status" role="status" aria-live="polite"></div>
+  </main>
+  <script src="/offline.js"></script>
 </body>
 </html>

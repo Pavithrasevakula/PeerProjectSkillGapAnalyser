@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 
+const INSTALL_BENEFITS = ['Faster loading', 'Home screen', 'Its own window', 'Quick shortcuts'];
+
 export default function PWAInstallPrompt() {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
   const [showPrompt, setShowPrompt] = useState(false);
@@ -47,6 +49,15 @@ export default function PWAInstallPrompt() {
     setShowPrompt(false);
   };
 
+  useEffect(() => {
+    if (!showPrompt) return undefined;
+    const closeOnEscape = (event) => {
+      if (event.key === 'Escape') setShowPrompt(false);
+    };
+    document.addEventListener('keydown', closeOnEscape);
+    return () => document.removeEventListener('keydown', closeOnEscape);
+  }, [showPrompt]);
+
   if (!showPrompt) return null;
 
   return (
@@ -77,40 +88,18 @@ export default function PWAInstallPrompt() {
             <h3 id="install-team-sync-title" className="text-xl font-bold text-neutral-900 mb-2">Install TeamSync</h3>
             <p className="text-neutral-600 mb-6">Get quick access with our app</p>
 
-            <div className="grid grid-cols-2 gap-3 mb-6 text-left">
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-sage-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-sage-700" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="text-sm text-neutral-700">Faster loading</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-sage-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-sage-700" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="text-sm text-neutral-700">Home screen</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-sage-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-sage-700" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="text-sm text-neutral-700">Notifications</span>
-              </div>
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 bg-sage-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <svg className="w-3 h-3 text-sage-700" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <span className="text-sm text-neutral-700">Offline mode</span>
-              </div>
-            </div>
+            <ul className="grid grid-cols-2 gap-3 mb-6 text-left list-none p-0">
+              {INSTALL_BENEFITS.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-2">
+                  <span className="w-5 h-5 bg-sage-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <svg className="w-3 h-3 text-sage-700" fill="currentColor" viewBox="0 0 20 20" aria-hidden="true">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                  </span>
+                  <span className="text-sm text-neutral-700">{benefit}</span>
+                </li>
+              ))}
+            </ul>
 
             <div className="flex flex-col gap-2">
               <button onClick={handleInstall} className="btn-primary w-full py-3">
@@ -125,22 +114,6 @@ export default function PWAInstallPrompt() {
           </div>
         </div>
       </div>
-
-      <style>{`
-        @keyframes slide-up {
-          from {
-            transform: translateY(100%);
-            opacity: 0;
-          }
-          to {
-            transform: translateY(0);
-            opacity: 1;
-          }
-        }
-        .animate-slide-up {
-          animation: slide-up 0.3s ease-out;
-        }
-      `}</style>
     </>
   );
 }

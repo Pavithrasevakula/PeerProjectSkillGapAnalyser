@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { addDoc, collection, deleteDoc, doc, setDoc } from "firebase/firestore";
 import { db } from "../firebase";
 import { useAuth } from "../auth.jsx";
@@ -84,21 +84,20 @@ export default function Profile() {
   const [msg, setMsg] = useState({ text: "", error: false });
   const [busyAction, setBusyAction] = useState(false);
 
-  useEffect(() => {
-    if (account && !form) {
-      setForm({ 
-        fullName: account.fullName || "", 
-        userRole: account.userRole || "Student", 
-        department: account.profile?.department || "",
-        yearOfStudy: account.profile?.yearOfStudy || 1,
-        experienceLevel: account.profile?.experienceLevel || "Beginner",
-        bio: account.profile?.bio || ""
-      });
-      if (!account.profile?.department) {
-        setIsEditing(true);
-      }
+  // Initialise the editable form once the account document has loaded (state adjusted during render).
+  if (account && !form) {
+    setForm({
+      fullName: account.fullName || "",
+      userRole: account.userRole || "Student",
+      department: account.profile?.department || "",
+      yearOfStudy: account.profile?.yearOfStudy || 1,
+      experienceLevel: account.profile?.experienceLevel || "Beginner",
+      bio: account.profile?.bio || ""
+    });
+    if (!account.profile?.department) {
+      setIsEditing(true);
     }
-  }, [account, form]);
+  }
 
   const run = async (fn, ok) => {
     if (busyAction) return;
@@ -253,8 +252,8 @@ export default function Profile() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Full Name</label>
-            <input
+            <label htmlFor="profile-full-name" className="block text-sm font-medium text-neutral-700 mb-2">Full Name</label>
+            <input id="profile-full-name"
               type="text"
               value={form.fullName}
               onChange={(e) => setForm({ ...form, fullName: e.target.value })}
@@ -264,8 +263,8 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Role</label>
-            <select
+            <label htmlFor="profile-role" className="block text-sm font-medium text-neutral-700 mb-2">Role</label>
+            <select id="profile-role"
               value={form.userRole}
               onChange={(e) => setForm({ ...form, userRole: e.target.value })}
               disabled={!isEditing}
@@ -278,8 +277,8 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Department</label>
-            <input
+            <label htmlFor="profile-department" className="block text-sm font-medium text-neutral-700 mb-2">Department</label>
+            <input id="profile-department"
               type="text"
               value={form.department}
               onChange={(e) => setForm({ ...form, department: e.target.value })}
@@ -290,8 +289,8 @@ export default function Profile() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Year of Study</label>
-            <input
+            <label htmlFor="profile-year-of-study" className="block text-sm font-medium text-neutral-700 mb-2">Year of Study</label>
+            <input id="profile-year-of-study"
               type="number"
               min="1"
               max="10"
@@ -303,8 +302,8 @@ export default function Profile() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Experience Level</label>
-            <select
+            <label htmlFor="profile-experience-level" className="block text-sm font-medium text-neutral-700 mb-2">Experience Level</label>
+            <select id="profile-experience-level"
               value={form.experienceLevel}
               onChange={(e) => setForm({ ...form, experienceLevel: e.target.value })}
               disabled={!isEditing}
@@ -318,8 +317,8 @@ export default function Profile() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-neutral-700 mb-2">Bio</label>
-          <textarea
+          <label htmlFor="profile-bio" className="block text-sm font-medium text-neutral-700 mb-2">Bio</label>
+          <textarea id="profile-bio"
             value={form.bio}
             onChange={(e) => setForm({ ...form, bio: e.target.value })}
             disabled={!isEditing}
@@ -362,8 +361,8 @@ export default function Profile() {
           />
           
           <div className="flex-shrink-0">
-            <label className="block text-xs font-medium text-neutral-700 mb-2">Proficiency (1-5)</label>
-            <input
+            <label htmlFor="profile-proficiency-1-5" className="block text-xs font-medium text-neutral-700 mb-2">Proficiency (1-5)</label>
+            <input id="profile-proficiency-1-5"
               type="number"
               min="1"
               max="5"
@@ -374,8 +373,8 @@ export default function Profile() {
           </div>
 
           <div className="flex-shrink-0">
-            <label className="block text-xs font-medium text-neutral-700 mb-2">Experience (years)</label>
-            <input
+            <label htmlFor="profile-experience-years" className="block text-xs font-medium text-neutral-700 mb-2">Experience (years)</label>
+            <input id="profile-experience-years"
               type="number"
               min="0"
               max="50"
@@ -402,7 +401,7 @@ export default function Profile() {
                   aria-label={`Remove ${s.skillName} skill`}
                   disabled={busyAction}
                   onClick={() => removeSkill(s.id)}
-                  className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-primary-700 hover:bg-primary-100 transition-colors"
+                  className="ml-1 rounded px-1.5 py-0.5 text-xs font-bold text-primary-700 hover:bg-primary-100 transition-colors"
                 >
                   Remove
                 </button>
@@ -441,8 +440,8 @@ export default function Profile() {
           />
           
           <div className="flex-shrink-0">
-            <label className="block text-xs font-medium text-neutral-700 mb-2">Preference (1-5)</label>
-            <input
+            <label htmlFor="profile-preference-1-5" className="block text-xs font-medium text-neutral-700 mb-2">Preference (1-5)</label>
+            <input id="profile-preference-1-5"
               type="number"
               min="1"
               max="5"
@@ -468,7 +467,7 @@ export default function Profile() {
                   aria-label={`Remove ${r.roleName} role`}
                   disabled={busyAction}
                   onClick={() => removeRole(r.id)}
-                  className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-sage-800 hover:bg-sage-100 transition-colors"
+                  className="ml-1 rounded px-1.5 py-0.5 text-xs font-bold text-sage-800 hover:bg-sage-100 transition-colors"
                 >
                   Remove
                 </button>
@@ -502,8 +501,8 @@ export default function Profile() {
         
         <div className="flex flex-wrap gap-3 items-end">
           <div className="flex-shrink-0">
-            <label className="block text-xs font-medium text-neutral-700 mb-2">Day</label>
-            <select
+            <label htmlFor="profile-day" className="block text-xs font-medium text-neutral-700 mb-2">Day</label>
+            <select id="profile-day"
               value={slot.dayOfWeek}
               onChange={(e) => setSlot({ ...slot, dayOfWeek: e.target.value })}
               className="input w-32"
@@ -513,8 +512,8 @@ export default function Profile() {
           </div>
 
           <div className="flex-shrink-0">
-            <label className="block text-xs font-medium text-neutral-700 mb-2">Start Time</label>
-            <input
+            <label htmlFor="profile-start-time" className="block text-xs font-medium text-neutral-700 mb-2">Start Time</label>
+            <input id="profile-start-time"
               type="time"
               value={slot.startTime}
               onChange={(e) => setSlot({ ...slot, startTime: e.target.value })}
@@ -523,8 +522,8 @@ export default function Profile() {
           </div>
 
           <div className="flex-shrink-0">
-            <label className="block text-xs font-medium text-neutral-700 mb-2">End Time</label>
-            <input
+            <label htmlFor="profile-end-time" className="block text-xs font-medium text-neutral-700 mb-2">End Time</label>
+            <input id="profile-end-time"
               type="time"
               value={slot.endTime}
               onChange={(e) => setSlot({ ...slot, endTime: e.target.value })}
@@ -558,7 +557,7 @@ export default function Profile() {
                           aria-label={`Remove ${day} ${s.startTime} to ${s.endTime} availability`}
                           disabled={busyAction}
                           onClick={() => removeSlot(s.id)}
-                          className="rounded px-1.5 py-0.5 text-[10px] font-bold text-neutral-500 hover:bg-error-50 hover:text-error-700 transition-colors"
+                          className="rounded px-1.5 py-0.5 text-xs font-bold text-neutral-500 hover:bg-error-50 hover:text-error-700 transition-colors"
                         >
                           Remove
                         </button>

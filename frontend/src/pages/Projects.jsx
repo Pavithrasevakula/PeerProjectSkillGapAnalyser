@@ -60,7 +60,7 @@ export default function Projects() {
           <h1 className="font-display text-[32px] leading-[1.22] tracking-[-1.7px] font-bold mt-2.5 mb-0 text-[#26372f]">
             Explore projects<span className="text-[#98b5a1]">.</span>
           </h1>
-          <p className="page-intro text-[13px] text-[#7c8980] leading-[1.7] mt-1 max-w-[560px]">
+          <p className="page-intro text-[13px] text-[#5f6b64] leading-[1.7] mt-1 max-w-[560px]">
             Find a challenge where your skills can make a difference.
           </p>
         </div>
@@ -72,41 +72,45 @@ export default function Projects() {
       {/* Filter Toolbar */}
       <div className="filter-toolbar grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-[minmax(240px,1fr)_repeat(3,minmax(140px,190px))] gap-2.5 mb-4">
         <div className="search-box flex items-center gap-2 bg-white border border-[#e0e6df] rounded-[10px] h-[43px] px-3 w-full min-w-0 sm:col-span-2 xl:col-span-1">
-          <svg viewBox="0 0 24 24" className="text-[#9aa39b] w-[17px] h-[17px] flex-none" fill="none" stroke="currentColor" strokeWidth={1.7}>
+          <svg viewBox="0 0 24 24" className="text-[#5f6b64] w-[17px] h-[17px] flex-none" fill="none" stroke="currentColor" strokeWidth={1.7}>
             <circle cx="11" cy="11" r="7"/>
             <path d="m16 16 4 4"/>
           </svg>
           <input
             type="search"
+            aria-label="Search projects"
             placeholder="Search projects, skills, or topics…"
             value={filters.search}
             onChange={(e) => setFilters({ ...filters, search: e.target.value })}
-            className="border-0 outline-0 bg-transparent w-full min-w-0 text-ink text-xs placeholder:text-[#a1a9a2]"
+            className="border-0 outline-0 bg-transparent w-full min-w-0 text-ink text-xs placeholder:text-[#5f6b64]"
           />
         </div>
         
         <select
+          aria-label="Filter by domain"
           value={filters.domain}
           onChange={(e) => setFilters({ ...filters, domain: e.target.value })}
-          className="w-full min-w-0 h-[43px] px-3 pr-8 border border-[#e0e6df] rounded-[10px] bg-white text-[#657269] text-[11px]"
+          className="w-full min-w-0 h-[43px] px-3 pr-8 border border-[#e0e6df] rounded-[10px] bg-white text-[#657269] text-xs"
         >
           <option value="">All domains</option>
           {domains.map((d) => <option key={d} value={d}>{d}</option>)}
         </select>
         
         <select
+          aria-label="Filter by skill"
           value={filters.skillId}
           onChange={(e) => setFilters({ ...filters, skillId: e.target.value })}
-          className="w-full min-w-0 h-[43px] px-3 pr-8 border border-[#e0e6df] rounded-[10px] bg-white text-[#657269] text-[11px]"
+          className="w-full min-w-0 h-[43px] px-3 pr-8 border border-[#e0e6df] rounded-[10px] bg-white text-[#657269] text-xs"
         >
           <option value="">All skills</option>
           {skills.map((s) => <option key={s.id} value={s.id}>{s.skillName}</option>)}
         </select>
         
         <select
+          aria-label="Filter by role"
           value={filters.roleId}
           onChange={(e) => setFilters({ ...filters, roleId: e.target.value })}
-          className="w-full min-w-0 h-[43px] px-3 pr-8 border border-[#e0e6df] rounded-[10px] bg-white text-[#657269] text-[11px]"
+          className="w-full min-w-0 h-[43px] px-3 pr-8 border border-[#e0e6df] rounded-[10px] bg-white text-[#657269] text-xs"
         >
           <option value="">All roles</option>
           {roles.map((r) => <option key={r.id} value={r.id}>{r.roleName}</option>)}
@@ -114,11 +118,11 @@ export default function Projects() {
       </div>
 
       {/* Results Meta */}
-      <div className="results-meta flex items-center justify-between text-[11px] font-bold text-[#4b5b50] mx-0.5 mb-3.5">
+      <div className="results-meta flex items-center justify-between text-xs font-bold text-[#4b5b50] mx-0.5 mb-3.5">
         <span>
           {projects === undefined ? 'Loading projects...' : `${filteredProjects.length} projects`}
         </span>
-        <span className="meta-note font-normal text-[#9da59e] hidden sm:inline">
+        <span className="meta-note font-normal text-[#5f6b64] hidden sm:inline">
           Every team starts with a skill gap.
         </span>
       </div>
@@ -153,13 +157,13 @@ export default function Projects() {
             className="project-card min-w-0 w-full px-4 sm:px-[19px] py-[19px] border border-line rounded-[15px] bg-white flex flex-col min-h-[275px] hover:border-[#cbdacf] hover:-translate-y-0.5 transition-all no-underline"
           >
             <div className="project-card-top flex items-start justify-between gap-2.5">
-              <span className="project-category text-[#658372] bg-[#eff5ef] rounded-lg px-2 py-1 text-[9px] tracking-[0.3px] font-bold">
+              <span className="project-category text-[#4a6858] bg-[#eff5ef] rounded-lg px-2 py-1 text-xs tracking-[0.3px] font-bold">
                 {p.domainArea || 'General'}
               </span>
             </div>
             
-            <div className="owner-label text-[10px] text-[#939c95] flex items-center gap-1.5 mt-3">
-              <div className="owner-dot w-[19px] h-[19px] rounded-lg bg-[#edf0eb] grid place-items-center text-[#6d8172] text-[8px] font-extrabold">
+            <div className="owner-label text-xs text-[#5f6b64] flex items-center gap-1.5 mt-3">
+              <div className="owner-dot w-[19px] h-[19px] rounded-lg bg-[#edf0eb] grid place-items-center text-[#5f6b64] text-[8px] font-extrabold">
                 {p.ownerName?.charAt(0).toUpperCase() || 'P'}
               </div>
               by {p.ownerName || 'Project Owner'}
@@ -169,7 +173,7 @@ export default function Projects() {
               {p.title || 'Untitled project'}
             </h3>
             
-            <p className="project-description text-[11px] text-[#808b82] leading-[1.7] mb-3.5 min-h-[38px]">
+            <p className="project-description text-xs text-[#5f6b64] leading-[1.7] mb-3.5 min-h-[38px]">
               {p.description || 'No description provided.'}
             </p>
             
@@ -180,13 +184,13 @@ export default function Projects() {
                 </span>
               ))}
               {p.requiredSkills?.length > 3 && (
-                <span className="skill-tag more bg-white text-[#78867b] border border-[#e8ece7]">
+                <span className="skill-tag more bg-white text-[#5f6b64] border border-[#e8ece7]">
                   +{p.requiredSkills.length - 3} more
                 </span>
               )}
             </div>
             
-            <div className="project-meta-row flex items-center gap-3.5 flex-wrap mt-auto border-t border-[#f0f2ef] pt-3.5 text-[#8c958e] text-[10px]">
+            <div className="project-meta-row flex items-center gap-3.5 flex-wrap mt-auto border-t border-[#f0f2ef] pt-3.5 text-[#5f6b64] text-xs">
               <span className="flex items-center gap-1">
                 <svg viewBox="0 0 24 24" className="w-3.5 h-3.5" fill="none" stroke="currentColor" strokeWidth={1.7}>
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -206,10 +210,10 @@ export default function Projects() {
             </div>
             
             <div className="project-card-bottom flex flex-col min-[360px]:flex-row min-[360px]:items-center min-[360px]:justify-between gap-2.5 mt-3.5">
-              <div className="fit-label text-[10px] text-[#7a8b7d]">
+              <div className="fit-label text-xs text-[#5f6b64]">
                 <strong className="text-[#50775d]">Good match</strong> for your skills
               </div>
-              <span className="btn btn-primary text-[10px] px-3 py-1.5 min-h-[34px]">
+              <span className="btn btn-primary text-xs px-3 py-1.5 min-h-[34px]">
                 View details
               </span>
             </div>

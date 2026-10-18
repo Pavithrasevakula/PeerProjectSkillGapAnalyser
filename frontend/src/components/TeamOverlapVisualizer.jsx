@@ -2,64 +2,61 @@ import { useState, useEffect } from 'react';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 
+function calculateOverlap(members) {
+  const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const HOURS = Array.from({ length: 14 }, (_, i) => i + 8);
+  
+  const overlapGrid = {};
+  
+  DAYS.forEach(day => {
+    HOURS.forEach(hour => {
+      const key = `${day}-${hour}`;
+      overlapGrid[key] = 0;
+    });
+  });
+
+  members.forEach(member => {
+    if (member.availability) {
+      member.availability.forEach(slot => {
+        const day = slot.dayOfWeek || slot.day;
+        const hour = parseInt(slot.startTime, 10);
+        const key = `${day === day?.slice(0, 3) ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].find((fullDay) => fullDay.startsWith(day)) || day : day}-${hour}`;
+        if (overlapGrid[key] !== undefined) {
+          overlapGrid[key]++;
+        }
+      });
+    }
+  });
+
+  return {
+    grid: overlapGrid,
+    maxOverlap: Math.max(...Object.values(overlapGrid), 1)
+  };
+}
+
 export default function TeamOverlapVisualizer({ projectId }) {
   const [overlap, setOverlap] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadOverlap();
-  }, [projectId]);
-
-  const loadOverlap = async () => {
-    try {
-      const membersSnap = await getDocs(collection(db, 'projects', projectId, 'teamMembers'));
-      const members = await Promise.all(membersSnap.docs.map(async (memberDoc) => {
-        const member = memberDoc.data();
-        const availabilitySnap = await getDocs(collection(db, 'users', member.profileId || memberDoc.id, 'availability'));
-        return { ...member, availability: availabilitySnap.docs.map((slotDoc) => slotDoc.data()) };
-      }));
-      
-      const overlapData = calculateOverlap(members);
-      setOverlap(overlapData);
-    } catch (err) {
-      console.error('Load overlap error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateOverlap = (members) => {
-    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-    const HOURS = Array.from({ length: 14 }, (_, i) => i + 8);
-    
-    const overlapGrid = {};
-    
-    DAYS.forEach(day => {
-      HOURS.forEach(hour => {
-        const key = `${day}-${hour}`;
-        overlapGrid[key] = 0;
-      });
-    });
-
-    members.forEach(member => {
-      if (member.availability) {
-        member.availability.forEach(slot => {
-          const day = slot.dayOfWeek || slot.day;
-          const hour = parseInt(slot.startTime, 10);
-          const key = `${day === day?.slice(0, 3) ? ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].find((fullDay) => fullDay.startsWith(day)) || day : day}-${hour}`;
-          if (overlapGrid[key] !== undefined) {
-            overlapGrid[key]++;
-          }
-        });
+    let cancelled = false;
+    (async () => {
+      try {
+        const membersSnap = await getDocs(collection(db, 'projects', projectId, 'teamMembers'));
+        const members = await Promise.all(membersSnap.docs.map(async (memberDoc) => {
+          const member = memberDoc.data();
+          const availabilitySnap = await getDocs(collection(db, 'users', member.profileId || memberDoc.id, 'availability'));
+          return { ...member, availability: availabilitySnap.docs.map((slotDoc) => slotDoc.data()) };
+        }));
+        if (!cancelled) setOverlap(calculateOverlap(members));
+      } catch (err) {
+        console.error('Load overlap error:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
       }
-    });
-
-    return {
-      grid: overlapGrid,
-      maxOverlap: Math.max(...Object.values(overlapGrid), 1)
-    };
-  };
-
+    })();
+    return () => { cancelled = true; };
+  }, [projectId]);
   if (loading) {
     return (
       <div className="card p-6">

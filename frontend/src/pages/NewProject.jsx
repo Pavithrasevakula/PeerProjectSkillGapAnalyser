@@ -5,9 +5,15 @@ import { db } from "../firebase";
 import { useAuth } from "../auth.jsx";
 import { useLive } from "../hooks";
 import { errorMessage } from "../api";
+import { validateProjectForm } from "../lib/projectValidation";
 
+// Remount the form when switching between "new" and a specific project so state never leaks.
 export default function NewProject() {
   const { id } = useParams();
+  return <ProjectForm key={id || "new"} id={id} />;
+}
+
+function ProjectForm({ id }) {
   const { user, account } = useAuth();
   const navigate = useNavigate();
   const skills = useLive(() => collection(db, "skills"), []).data || [];
@@ -26,7 +32,6 @@ export default function NewProject() {
     if (!id) return;
 
     let cancelled = false;
-    setLoadingProject(true);
     getDoc(doc(db, "projects", id))
       .then((snapshot) => {
         if (cancelled) return;
@@ -80,25 +85,8 @@ export default function NewProject() {
   async function submit(e) {
     e.preventDefault();
     setError("");
-    if (!reqSkills.length || !reqRoles.length) {
-      return setError("Add at least one required skill and one required role.");
-    }
-    if (!form.title.trim() || !form.description.trim() || !form.domainArea.trim()) {
-      return setError("Complete the title, description, and domain fields.");
-    }
-    const teamSize = Number(form.teamSizeRequired);
-    if (!Number.isInteger(teamSize) || teamSize < 2 || teamSize > 20) {
-      return setError("Team size must be a whole number between 2 and 20.");
-    }
-    if (!form.deadline || Number.isNaN(new Date(`${form.deadline}T23:59:00`).getTime())) {
-      return setError("Choose a valid project deadline.");
-    }
-    if (new Date(`${form.deadline}T23:59:00`) < new Date()) {
-      return setError("The deadline must be in the future.");
-    }
-    if (reqRoles.reduce((total, role) => total + Number(role.slots || 0), 0) > teamSize) {
-      return setError("Team size cannot be smaller than the requested role positions.");
-    }
+    const validationError = validateProjectForm({ form, requiredSkills: reqSkills, requiredRoles: reqRoles });
+    if (validationError) return setError(validationError);
     setBusy(true);
     try {
       const body = {
@@ -181,8 +169,8 @@ export default function NewProject() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Project Title</label>
-            <input
+            <label htmlFor="project-project-title" className="block text-sm font-medium text-neutral-700 mb-2">Project Title</label>
+            <input id="project-project-title"
               type="text"
               value={form.title}
               onChange={set('title')}
@@ -193,8 +181,8 @@ export default function NewProject() {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
-            <textarea
+            <label htmlFor="project-description" className="block text-sm font-medium text-neutral-700 mb-2">Description</label>
+            <textarea id="project-description"
               value={form.description}
               onChange={set('description')}
               required
@@ -205,8 +193,8 @@ export default function NewProject() {
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Domain Area</label>
-              <input
+              <label htmlFor="project-domain-area" className="block text-sm font-medium text-neutral-700 mb-2">Domain Area</label>
+              <input id="project-domain-area"
                 type="text"
                 value={form.domainArea}
                 onChange={set('domainArea')}
@@ -217,8 +205,8 @@ export default function NewProject() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Team Size</label>
-              <input
+              <label htmlFor="project-team-size" className="block text-sm font-medium text-neutral-700 mb-2">Team Size</label>
+              <input id="project-team-size"
                 type="number"
                 value={form.teamSizeRequired}
                 onChange={set('teamSizeRequired')}
@@ -230,8 +218,8 @@ export default function NewProject() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">Deadline</label>
-              <input
+              <label htmlFor="project-deadline" className="block text-sm font-medium text-neutral-700 mb-2">Deadline</label>
+              <input id="project-deadline"
                 type="date"
                 value={form.deadline}
                 onChange={set('deadline')}
@@ -258,8 +246,8 @@ export default function NewProject() {
           
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[220px]">
-              <label className="block text-xs font-medium text-neutral-700 mb-2">Skill</label>
-              <select
+              <label htmlFor="project-skill" className="block text-xs font-medium text-neutral-700 mb-2">Skill</label>
+              <select id="project-skill"
                 value={pickSkill.skillId}
                 onChange={(e) => setPickSkill({ ...pickSkill, skillId: e.target.value })}
                 className="input"
@@ -270,8 +258,8 @@ export default function NewProject() {
             </div>
 
             <div className="flex-shrink-0">
-              <label className="block text-xs font-medium text-neutral-700 mb-2">Min Level (1-5)</label>
-              <select
+              <label htmlFor="project-min-level-1-5" className="block text-xs font-medium text-neutral-700 mb-2">Min Level (1-5)</label>
+              <select id="project-min-level-1-5"
                 value={pickSkill.minProficiency}
                 onChange={(e) => setPickSkill({ ...pickSkill, minProficiency: e.target.value })}
                 className="input w-28"
@@ -281,8 +269,8 @@ export default function NewProject() {
             </div>
 
             <div className="flex-shrink-0">
-              <label className="block text-xs font-medium text-neutral-700 mb-2">Priority</label>
-              <select
+              <label htmlFor="project-priority" className="block text-xs font-medium text-neutral-700 mb-2">Priority</label>
+              <select id="project-priority"
                 value={pickSkill.priority}
                 onChange={(e) => setPickSkill({ ...pickSkill, priority: e.target.value })}
                 className="input w-36"
@@ -310,7 +298,7 @@ export default function NewProject() {
                     type="button"
                     aria-label={`Remove ${s.skillName}`}
                     onClick={() => setReqSkills(reqSkills.filter((_, j) => j !== i))}
-                    className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-primary-700 hover:bg-primary-100 transition-colors"
+                    className="ml-1 rounded px-1.5 py-0.5 text-xs font-bold text-primary-700 hover:bg-primary-100 transition-colors"
                   >
                     Remove
                   </button>
@@ -342,8 +330,8 @@ export default function NewProject() {
           
           <div className="flex flex-wrap gap-3 items-end">
             <div className="flex-1 min-w-[220px]">
-              <label className="block text-xs font-medium text-neutral-700 mb-2">Role</label>
-              <select
+              <label htmlFor="project-role" className="block text-xs font-medium text-neutral-700 mb-2">Role</label>
+              <select id="project-role"
                 value={pickRole.roleId}
                 onChange={(e) => setPickRole({ ...pickRole, roleId: e.target.value })}
                 className="input"
@@ -354,8 +342,8 @@ export default function NewProject() {
             </div>
 
             <div className="flex-shrink-0">
-              <label className="block text-xs font-medium text-neutral-700 mb-2">Positions</label>
-              <input
+              <label htmlFor="project-positions" className="block text-xs font-medium text-neutral-700 mb-2">Positions</label>
+              <input id="project-positions"
                 type="number"
                 value={pickRole.slots}
                 onChange={(e) => setPickRole({ ...pickRole, slots: e.target.value })}
@@ -382,7 +370,7 @@ export default function NewProject() {
                     type="button"
                     aria-label={`Remove ${r.roleName}`}
                     onClick={() => setReqRoles(reqRoles.filter((_, j) => j !== i))}
-                    className="ml-1 rounded px-1.5 py-0.5 text-[10px] font-bold text-sage-800 hover:bg-sage-100 transition-colors"
+                    className="ml-1 rounded px-1.5 py-0.5 text-xs font-bold text-sage-800 hover:bg-sage-100 transition-colors"
                   >
                     Remove
                   </button>
