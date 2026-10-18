@@ -1,6 +1,8 @@
 import { defineConfig } from "@playwright/test";
 
 const PORT = Number(process.env.PORT || 5050);
+// Set E2E_BASE_URL (e.g. https://your-site.web.app) to run against a deployed site instead of a local build.
+const REMOTE = process.env.E2E_BASE_URL;
 
 // Tests run against the production build served with the headers from firebase.json
 // (`npm run build` first, or use `npm run test:e2e`). They use the locally installed Chrome,
@@ -15,12 +17,12 @@ export default defineConfig({
   retries: 0,
   reporter: [["list"]],
   use: {
-    baseURL: `http://127.0.0.1:${PORT}`,
+    baseURL: REMOTE || `http://127.0.0.1:${PORT}`,
     channel: "chrome",
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  webServer: {
+  webServer: REMOTE ? undefined : {
     command: "node scripts/serve-dist.mjs",
     url: `http://127.0.0.1:${PORT}`,
     reuseExistingServer: true,

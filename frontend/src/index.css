@@ -300,12 +300,6 @@ select:focus-visible {
     color: #3c6649;
   }
 
-  .status-rejected,
-  .status-withdrawn {
-    background-color: #f4e9e7;
-    color: #8f4e47;
-  }
-
   /* Typography */
   h1,
   h2,

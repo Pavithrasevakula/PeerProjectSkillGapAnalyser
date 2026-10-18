@@ -94,7 +94,7 @@ export default function Login() {
       <div className="login-wrap w-full max-w-[980px] min-h-[560px] grid lg:grid-cols-[1.05fr_.95fr] bg-white border border-[#e5eae4] rounded-[24px] overflow-hidden shadow-[0_20px_70px_rgba(35,68,47,.07)]">
         
         {/* Left Story Section */}
-        <section className="login-story order-2 lg:order-1 p-6 sm:p-12 lg:px-11 lg:py-12 bg-[#eaf1eb] relative overflow-hidden flex flex-col justify-between">
+        <section className="login-story p-6 sm:p-12 lg:px-11 lg:py-12 bg-[#eaf1eb] relative overflow-hidden flex flex-col justify-between">
           {/* Decorative Circles */}
           <div className="absolute right-[-130px] top-[90px] w-[360px] h-[360px] border border-[#d0dfd1] rounded-full pointer-events-none" />
           <div className="absolute right-[-38px] top-[130px] w-[270px] h-[430px] border border-[#d0dfd1] rounded-full rotate-[30deg] pointer-events-none" />
@@ -147,9 +147,8 @@ export default function Login() {
         </section>
 
         {/* Right Form Section */}
-        <section className="login-form-area order-1 lg:order-2 flex items-center justify-center px-6 py-8 sm:px-10 sm:py-11">
+        <section className="login-form-area flex items-center justify-center px-6 py-8 sm:px-10 sm:py-11">
           <div className="login-form-inner w-full max-w-[330px]">
-            <p className="mb-6 font-display text-xl font-bold tracking-[-0.7px] text-pine lg:hidden" aria-hidden="true">Team<span className="text-pine-mid">Sync</span></p>
             <div className="login-kicker text-xs tracking-[1.4px] text-[#4d6b5a] font-extrabold">
               Welcome to TeamSync
             </div>

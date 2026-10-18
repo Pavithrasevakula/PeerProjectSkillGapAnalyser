@@ -10,7 +10,16 @@ test.describe("public pages are responsive", () => {
       await page.goto("/login");
       await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toBeVisible();
       await expectNoHorizontalOverflow(page);
-      // The form must be usable without scrolling past the marketing panel on small screens.
+      // Layout order: the TeamSync story comes first; on phones the sign-in form sits below it,
+      // from 1024px up the two sit side by side (story left, form right).
+      const story = await page.locator("section.login-story").boundingBox();
+      const form = await page.locator("section.login-form-area").boundingBox();
+      if (viewport.width < 1024) {
+        expect(story.y, "story above form on small screens").toBeLessThan(form.y);
+      } else {
+        expect(story.x, "story left of form on large screens").toBeLessThan(form.x);
+      }
+      await page.getByLabel("Email address").scrollIntoViewIfNeeded();
       await expect(page.getByLabel("Email address")).toBeInViewport({ ratio: 1 });
 
       await page.getByRole("button", { name: "Create one now" }).click();

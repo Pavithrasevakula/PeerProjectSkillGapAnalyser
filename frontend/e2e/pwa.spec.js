@@ -60,9 +60,12 @@ test.describe("PWA", () => {
       }
       return urls;
     });
+    const origin = new URL(page.url()).origin;
     expect(cached.length).toBeGreaterThan(0);
     for (const entry of cached) {
-      expect(entry).toMatch(/^teamsync-v\d+ http:\/\/127\.0\.0\.1:\d+\//);
+      const [cacheName, url] = entry.split(" ");
+      expect(cacheName).toMatch(/^teamsync-v\d+$/);
+      expect(url.startsWith(`${origin}/`), `${url} should be same-origin (${origin})`).toBe(true);
       expect(entry).not.toMatch(/googleapis|cloudfunctions|\/api\/|\/__\//);
     }
     expect(cached.some((entry) => entry.endsWith("/offline.html"))).toBe(true);
